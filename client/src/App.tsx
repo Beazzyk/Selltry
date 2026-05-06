@@ -16,14 +16,17 @@ import MarginsPage from '@/pages/Settings/Margins';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 
 function AuthLoader({ children }: { children: React.ReactNode }) {
-  const { setUser, setLoading } = useAuthStore();
+  const setUser = useAuthStore((s) => s.setUser);
+  const setLoading = useAuthStore((s) => s.setLoading);
 
   useEffect(() => {
+    let cancelled = false;
     getMe()
-      .then(setUser)
-      .catch(() => setUser(null))
-      .finally(() => setLoading(false));
-  }, [setUser, setLoading]);
+      .then((user) => { if (!cancelled) setUser(user); })
+      .catch(() => { if (!cancelled) setUser(null); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return <>{children}</>;
 }
