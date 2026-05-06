@@ -5,6 +5,15 @@ import { prisma } from '../utils/prisma';
 import { env } from '../utils/env';
 import { getValidAccessToken } from './allegro-oauth.service';
 
+interface AllegroMeResponse {
+  id: string;
+  login: string;
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+  company?: { name?: string };
+}
+
 interface AllegroCategory {
   id: string;
   name: string;
@@ -25,6 +34,12 @@ const ALLEGRO_BASE_URL = env.ALLEGRO_SANDBOX
   : 'https://api.allegro.pl';
 
 const ACCEPT_HEADER = 'application/vnd.allegro.public.v1+json';
+
+export async function getAllegroMe(userId: string): Promise<AllegroMeResponse> {
+  const token = await getAllegroToken(userId);
+  const result = await requestWithRetry<AllegroMeResponse>(`${ALLEGRO_BASE_URL}/me`, token);
+  return result.data;
+}
 
 export async function getAllegroCategories(
   userId: string,

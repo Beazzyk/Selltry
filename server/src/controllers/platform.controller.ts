@@ -198,8 +198,8 @@ export async function testPlatformConnection(req: Request, res: Response, next: 
       return;
     }
     if (platform === Platform.ALLEGRO && !env.ALLEGRO_MOCK) {
-      await allegroOAuthService.getValidAccessToken(userId(req));
-      res.json({ ok: true, message: 'Allegro: token aktywny' });
+      const me = await allegroApiService.getAllegroMe(userId(req));
+      res.json({ ok: true, message: `Allegro: zalogowany jako ${me.login}` });
       return;
     }
     res.json({ ok: true, message: `${platform}: polaczenie aktywne (MOCK)` });
