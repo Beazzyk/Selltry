@@ -16,6 +16,17 @@ export async function getAllegroOAuthStart(): Promise<{ authorizationUrl: string
   return data;
 }
 
+export async function getOlxOAuthStart(): Promise<{ authorizationUrl: string } | null> {
+  const { data } = await apiClient.get('/platforms/olx/oauth/start');
+  if ('authorizationUrl' in data) return data as { authorizationUrl: string };
+  return null; // mock mode — already connected
+}
+
+export async function testPlatform(platform: Platform): Promise<{ ok: boolean; message: string }> {
+  const { data } = await apiClient.get<{ ok: boolean; message: string }>(`/platforms/${platform}/test`);
+  return data;
+}
+
 export async function disconnectPlatform(platform: Platform): Promise<void> {
   await apiClient.delete(`/platforms/${platform}`);
 }

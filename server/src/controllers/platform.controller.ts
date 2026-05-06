@@ -164,9 +164,9 @@ export async function getOlxOAuthCallback(req: Request, res: Response, next: Nex
       return;
     }
     await olxOAuthService.exchangeCodeAndStoreConnection(code, state);
-    res.status(200).send('OLX connected. You can close this tab.');
+    res.send(oauthHtml('success', 'OLX'));
   } catch (error) {
-    next(error);
+    res.send(oauthHtml('error', 'OLX', 'Blad wymiany tokenu'));
   }
 }
 
@@ -177,13 +177,41 @@ export async function getAllegroOAuthCallback(req: Request, res: Response, next:
     const code = typeof req.query.code === 'string' ? req.query.code : '';
     const state = typeof req.query.state === 'string' ? req.query.state : '';
     if (!code || !state) {
-      res.status(400).json({ error: 'Missing code or state query params' });
+      res.send(oauthHtml('error', 'ALLEGRO', 'Brak parametrow autoryzacji'));
       return;
     }
-
     await allegroOAuthService.exchangeCodeAndStoreConnection(code, state);
-    res.status(200).send('Allegro connected. You can close this tab.');
+    res.send(oauthHtml('success', 'ALLEGRO'));
+  } catch (error) {
+    res.send(oauthHtml('error', 'ALLEGRO', 'Blad wymiany tokenu'));
+  }
+}
+
+export async function testPlatformConnection(req: Request, res: Response, next: NextFunction) {
+  try {
+    const platform = req.params.platform.toUpperCase() as Platform;
+    const record = await prisma.userPlatform.findUnique({
+      where: { userId_platform: { userId: userId(req), platform } },
+    });
+    if (!record?.isActive) {
+      res.status(400).json({ error: 'Platforma niepodlaczona' });
+      return;
+    }
+    if (platform === Platform.ALLEGRO && !env.ALLEGRO_MOCK) {
+      await allegroOAuthService.getValidAccessToken(userId(req));
+      res.json({ ok: true, message: 'Allegro: token aktywny' });
+      return;
+    }
+    res.json({ ok: true, message: `${platform}: polaczenie aktywne (MOCK)` });
   } catch (error) {
     next(error);
   }
+}
+
+function oauthHtml(status: 'success' | 'error', platform: string, message?: string): string {
+  const msg = status === 'success' ? 'Polaczono! Mozesz zamknac to okno.' : `Blad: ${message ?? 'Sprobuj ponownie.'}`;
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>OAuth</title></head><body>
+<script>if(window.opener){window.opener.postMessage({type:'OAUTH_CONNECTED',platform:'${platform}',status:'${status}'},'*');window.close();}
+else{document.getElementById('m').style.display='block';}</script>
+<p id="m" style="display:none;font-family:sans-serif;padding:40px;text-align:center">${msg}</p></body></html>`;
 }

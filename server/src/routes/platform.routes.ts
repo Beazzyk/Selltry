@@ -12,6 +12,7 @@ router.use(authMiddleware);
 
 // Ogólne
 router.get('/platforms', ctrl.getPlatforms);
+router.get('/platforms/:platform/test', ctrl.testPlatformConnection);
 router.post('/platforms/:platform/connect', ctrl.connectPlatform);
 router.delete('/platforms/:platform', ctrl.disconnectPlatform);
 
