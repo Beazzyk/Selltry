@@ -9,5 +9,5 @@ build/
 Thumbs.db
 coverage/
 .nyc_output/
-prisma/migrations/
-!prisma/migrations/.gitkeep
+server/prisma/migrations/
+!server/prisma/migrations/.gitkeep
