@@ -3,10 +3,12 @@ import { z } from 'zod';
 import * as authService from '../services/auth.service';
 import { AuthRequest } from '../middleware/auth.middleware';
 
+const isProd = process.env.NODE_ENV === 'production';
+
 const COOKIE_OPTS = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: 'strict' as const,
+  secure: isProd,
+  sameSite: isProd ? ('none' as const) : ('lax' as const),
 };
 
 const registerSchema = z.object({
