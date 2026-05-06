@@ -6,6 +6,8 @@ import { prisma } from '../utils/prisma';
 import * as allegroApiService from '../services/allegro-api.service';
 import { encrypt } from '../utils/crypto';
 import * as allegroOAuthService from '../services/allegro-oauth.service';
+import * as otomotoOAuthService from '../services/otomoto-oauth.service';
+import * as olxOAuthService from '../services/olx-oauth.service';
 import { env } from '../utils/env';
 
 function userId(req: Request): string {
@@ -101,6 +103,74 @@ export async function getAllegroOAuthStart(req: Request, res: Response, next: Ne
     next(error);
   }
 }
+
+// ─── Otomoto ─────────────────────────────────────────────────────────────────
+
+const otomotoConnectSchema = z.object({
+  username: z.string().min(1),
+  password: z.string().min(1),
+});
+
+export async function connectOtomoto(req: Request, res: Response, next: NextFunction) {
+  try {
+    if (env.OTOMOTO_MOCK) {
+      // MOCK MODE — od razu aktywuje bez prawdziwego API
+      const connected = await prisma.userPlatform.upsert({
+        where: { userId_platform: { userId: userId(req), platform: 'OTOMOTO' } },
+        create: { userId: userId(req), platform: 'OTOMOTO', isActive: true, connectedAt: new Date() },
+        update: { isActive: true, connectedAt: new Date() },
+      });
+      res.status(201).json(connected);
+      return;
+    }
+    const { username, password } = otomotoConnectSchema.parse(req.body);
+    await otomotoOAuthService.connectWithCredentials(userId(req), username, password);
+    const record = await prisma.userPlatform.findUnique({
+      where: { userId_platform: { userId: userId(req), platform: 'OTOMOTO' } },
+    });
+    res.status(201).json(record);
+  } catch (error) {
+    next(error);
+  }
+}
+
+// ─── OLX ─────────────────────────────────────────────────────────────────────
+
+export async function getOlxOAuthStart(req: Request, res: Response, next: NextFunction) {
+  try {
+    if (env.OLX_MOCK) {
+      // MOCK MODE — od razu aktywuje
+      const connected = await prisma.userPlatform.upsert({
+        where: { userId_platform: { userId: userId(req), platform: 'OLX' } },
+        create: { userId: userId(req), platform: 'OLX', isActive: true, connectedAt: new Date() },
+        update: { isActive: true, connectedAt: new Date() },
+      });
+      res.status(201).json(connected);
+      return;
+    }
+    const authorizationUrl = olxOAuthService.buildAuthorizationUrl(userId(req));
+    res.json({ authorizationUrl });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getOlxOAuthCallback(req: Request, res: Response, next: NextFunction) {
+  try {
+    const code = typeof req.query.code === 'string' ? req.query.code : '';
+    const state = typeof req.query.state === 'string' ? req.query.state : '';
+    if (!code || !state) {
+      res.status(400).json({ error: 'Missing code or state' });
+      return;
+    }
+    await olxOAuthService.exchangeCodeAndStoreConnection(code, state);
+    res.status(200).send('OLX connected. You can close this tab.');
+  } catch (error) {
+    next(error);
+  }
+}
+
+// ─── Allegro callbacks ───────────────────────────────────────────────────────
 
 export async function getAllegroOAuthCallback(req: Request, res: Response, next: NextFunction) {
   try {

@@ -2,8 +2,8 @@ import axios, { AxiosError } from 'axios';
 import { Platform } from '@prisma/client';
 import { AppError } from '../middleware/error.middleware';
 import { prisma } from '../utils/prisma';
-import { decrypt } from '../utils/crypto';
 import { env } from '../utils/env';
+import { getValidAccessToken } from './allegro-oauth.service';
 
 interface AllegroCategory {
   id: string;
@@ -81,28 +81,46 @@ export async function saveAllegroMappings(
 }
 
 async function getAllegroToken(userId: string): Promise<string> {
-  const platform = await prisma.userPlatform.findUnique({
-    where: { userId_platform: { userId, platform: Platform.ALLEGRO } },
-    select: { accessToken: true, isActive: true },
-  });
-
-  if (!platform?.accessToken) {
-    throw new AppError(400, 'Allegro access token missing. Connect Allegro first.');
-  }
-
-  const token = tryDecrypt(platform.accessToken);
-  if (!platform.isActive) {
-    throw new AppError(400, 'Allegro platform is not active.');
-  }
-  return token;
+  // Auto-refresh jeśli token wygasa w ciągu 5 minut
+  return getValidAccessToken(userId);
 }
 
-function tryDecrypt(value: string): string {
-  try {
-    return value.includes(':') ? decrypt(value) : value;
-  } catch {
-    return value;
-  }
+export async function uploadImageToAllegro(userId: string, imageUrl: string): Promise<string> {
+  const token = await getAllegroToken(userId);
+  const response = await axios.post<{ imageId: string }>(
+    `${ALLEGRO_BASE_URL}/sale/images`,
+    { url: imageUrl },
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': ACCEPT_HEADER,
+        Accept: ACCEPT_HEADER,
+        'User-Agent': env.ALLEGRO_USER_AGENT,
+      },
+    },
+  );
+  return response.data.imageId;
+}
+
+export async function createAllegroOffer(
+  userId: string,
+  payload: Record<string, unknown>,
+): Promise<{ id: string }> {
+  const token = await getAllegroToken(userId);
+  const response = await axios.post<{ id: string }>(
+    `${ALLEGRO_BASE_URL}/sale/offers`,
+    payload,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': ACCEPT_HEADER,
+        Accept: ACCEPT_HEADER,
+        'Accept-Language': 'pl-PL',
+        'User-Agent': env.ALLEGRO_USER_AGENT,
+      },
+    },
+  );
+  return response.data;
 }
 
 async function requestWithRetry<T>(url: string, token: string): Promise<AllegroRequestResult<T>> {
