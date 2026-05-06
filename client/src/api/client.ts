@@ -1,7 +1,11 @@
 import axios from 'axios';
 
+const BASE = import.meta.env.VITE_API_URL
+  ? `${import.meta.env.VITE_API_URL}/api`
+  : '/api';
+
 const apiClient = axios.create({
-  baseURL: '/api',
+  baseURL: BASE,
   withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
 });
@@ -13,7 +17,7 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401 && !original._retry) {
       original._retry = true;
       try {
-        await axios.post('/api/auth/refresh', {}, { withCredentials: true });
+        await axios.post(`${BASE}/auth/refresh`, {}, { withCredentials: true });
         return apiClient(original);
       } catch {
         window.location.href = '/login';
