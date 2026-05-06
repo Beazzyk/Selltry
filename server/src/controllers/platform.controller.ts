@@ -209,9 +209,16 @@ export async function testPlatformConnection(req: Request, res: Response, next: 
 }
 
 function oauthHtml(status: 'success' | 'error', platform: string, message?: string): string {
-  const msg = status === 'success' ? 'Polaczono! Mozesz zamknac to okno.' : `Blad: ${message ?? 'Sprobuj ponownie.'}`;
+  const msg = status === 'success' ? 'Polaczono! Zamykanie...' : `Blad: ${message ?? 'Sprobuj ponownie.'}`;
   return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>OAuth</title></head><body>
-<script>if(window.opener){window.opener.postMessage({type:'OAUTH_CONNECTED',platform:'${platform}',status:'${status}'},'*');window.close();}
-else{document.getElementById('m').style.display='block';}</script>
-<p id="m" style="display:none;font-family:sans-serif;padding:40px;text-align:center">${msg}</p></body></html>`;
+<p style="font-family:sans-serif;padding:40px;text-align:center">${msg}</p>
+<script>
+if(window.opener){
+  window.opener.postMessage({type:'OAUTH_CONNECTED',platform:'${platform}',status:'${status}'},'*');
+  window.close();
+}else{
+  setTimeout(function(){window.location.href='${env.CLIENT_URL}/platforms';},1500);
+}
+</script>
+</body></html>`;
 }
