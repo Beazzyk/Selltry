@@ -23,11 +23,12 @@ const PLATFORM_META: Record<Platform, { label: string; bg: string; initials: str
 
 const PLATFORMS: Platform[] = ['ALLEGRO', 'OVOKO', 'OTOMOTO', 'OLX', 'EBAY'];
 
-function openOAuthPopup(url: string): void {
+function openOAuthPopup(): Window | null {
   const w = 600, h = 700;
   const left = Math.round(window.screenX + (window.outerWidth - w) / 2);
   const top = Math.round(window.screenY + (window.outerHeight - h) / 2);
-  window.open(url, 'oauth_popup', `width=${w},height=${h},left=${left},top=${top},resizable=yes,scrollbars=yes`);
+  // Otwieramy okno synchronicznie (przed await) żeby przeglądarka traktowała to jako user gesture
+  return window.open('about:blank', 'oauth_popup', `width=${w},height=${h},left=${left},top=${top},resizable=yes,scrollbars=yes`);
 }
 
 export default function PlatformsPage() {
@@ -68,24 +69,34 @@ export default function PlatformsPage() {
 
   async function handleConnect(platform: Platform) {
     if (platform === 'ALLEGRO') {
+      const popup = openOAuthPopup(); // synchronicznie — przed await
       try {
         const { authorizationUrl } = await getAllegroOAuthStart();
-        openOAuthPopup(authorizationUrl);
+        if (popup) {
+          popup.location.href = authorizationUrl;
+        } else {
+          window.location.href = authorizationUrl;
+        }
       } catch {
+        popup?.close();
         toast('Nie udało się uruchomić OAuth Allegro', 'error');
       }
       return;
     }
     if (platform === 'OLX') {
+      const popup = openOAuthPopup();
       try {
         const result = await getOlxOAuthStart();
         if (result?.authorizationUrl) {
-          openOAuthPopup(result.authorizationUrl);
+          if (popup) popup.location.href = result.authorizationUrl;
+          else window.location.href = result.authorizationUrl;
         } else {
+          popup?.close();
           queryClient.invalidateQueries({ queryKey: ['platforms'] });
           toast('OLX połączona (MOCK)', 'success');
         }
       } catch {
+        popup?.close();
         toast('Nie udało się uruchomić OAuth OLX', 'error');
       }
       return;
