@@ -12,7 +12,7 @@ import ListingsPage from '@/pages/Listings';
 import NewListingPage from '@/pages/Listings/New';
 import PlatformsPage from '@/pages/Platforms';
 import OrdersPage from '@/pages/Orders';
-import MarginsPage from '@/pages/Settings/Margins';
+import SettingsPage from '@/pages/Settings';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 
 function AuthLoader({ children }: { children: React.ReactNode }) {
@@ -48,7 +48,7 @@ export default function App() {
                 <Route path="/listings/new" element={<NewListingPage />} />
                 <Route path="/platforms" element={<ErrorBoundary><PlatformsPage /></ErrorBoundary>} />
                 <Route path="/orders" element={<ErrorBoundary><OrdersPage /></ErrorBoundary>} />
-                <Route path="/settings" element={<ErrorBoundary><MarginsPage /></ErrorBoundary>} />
+                <Route path="/settings" element={<ErrorBoundary><SettingsPage /></ErrorBoundary>} />
               </Route>
             </Route>
           </Routes>

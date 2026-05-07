@@ -63,6 +63,15 @@ export async function logout(token: string): Promise<void> {
   await prisma.refreshToken.deleteMany({ where: { token } });
 }
 
+export async function changePassword(userId: string, currentPassword: string, newPassword: string): Promise<void> {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) throw new AppError(404, 'User not found');
+  const valid = await bcrypt.compare(currentPassword, user.passwordHash);
+  if (!valid) throw new AppError(400, 'Aktualne hasło jest nieprawidłowe');
+  const newHash = await bcrypt.hash(newPassword, 12);
+  await prisma.user.update({ where: { id: userId }, data: { passwordHash: newHash } });
+}
+
 export async function getMe(userId: string) {
   const user = await prisma.user.findUnique({
     where: { id: userId },
