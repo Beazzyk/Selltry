@@ -19,7 +19,7 @@ export default function MarginsSection() {
   const { data = [] } = useQuery({ queryKey: ['margins'], queryFn: getMarginRules });
   const [rules, setRules] = useState<Omit<MarginRule, 'id'>[]>([]);
   const debounced = useDebounce(rules, 500);
-  const mutation = useMutation({ mutationFn: saveMarginRules });
+  const { mutate: saveRules } = useMutation({ mutationFn: saveMarginRules });
 
   useEffect(() => {
     if (!data.length) {
@@ -30,8 +30,8 @@ export default function MarginsSection() {
   }, [data]);
 
   useEffect(() => {
-    if (debounced.length > 0) mutation.mutate(debounced);
-  }, [debounced, mutation]);
+    if (debounced.length > 0) saveRules(debounced);
+  }, [debounced, saveRules]);
 
   const byPlatform = useMemo(
     () => Object.fromEntries(rules.map((r) => [r.platform, r])) as Record<Platform, Omit<MarginRule, 'id'>>,
