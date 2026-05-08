@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import axios from 'axios';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2, XCircle, Plug, Unplug, FlaskConical, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -6,6 +7,9 @@ import {
   connectPlatform,
   disconnectPlatform,
   getAllegroOAuthStart,
+  getOlxAdverts,
+  getOlxCategoryAttributes,
+  getOlxDeliverySettings,
   getOlxOAuthStart,
   getPlatforms,
   testPlatform,
@@ -66,6 +70,30 @@ export default function PlatformsPage() {
     onSuccess: (r) => toast(r.message, 'success'),
     onError: () => toast('Test połączenia nie powiódł się', 'error'),
   });
+  const olxDeliveryMut = useMutation({
+    mutationFn: getOlxDeliverySettings,
+    onSuccess: (response) => {
+      const count = Array.isArray(response.data) ? response.data.length : 0;
+      toast(`OLX delivery settings: ${count} rekordów`, 'success');
+    },
+    onError: (error) => toast(getRequestErrorMessage(error, 'Nie udało się pobrać OLX delivery settings'), 'error'),
+  });
+  const olxAdvertsMut = useMutation({
+    mutationFn: getOlxAdverts,
+    onSuccess: (response) => {
+      const count = Array.isArray(response.data) ? response.data.length : 0;
+      toast(`OLX adverts: ${count} rekordów`, 'success');
+    },
+    onError: (error) => toast(getRequestErrorMessage(error, 'Nie udało się pobrać OLX adverts'), 'error'),
+  });
+  const olxCategoryAttrsMut = useMutation({
+    mutationFn: () => getOlxCategoryAttributes('1459'),
+    onSuccess: (response) => {
+      const count = Array.isArray(response.data) ? response.data.length : 0;
+      toast(`OLX category attributes (1459): ${count} rekordów`, 'success');
+    },
+    onError: (error) => toast(getRequestErrorMessage(error, 'Nie udało się pobrać OLX category attributes'), 'error'),
+  });
 
   async function handleConnect(platform: Platform) {
     if (platform === 'ALLEGRO') {
@@ -77,9 +105,9 @@ export default function PlatformsPage() {
         } else {
           window.location.href = authorizationUrl;
         }
-      } catch {
+      } catch (error) {
         popup?.close();
-        toast('Nie udało się uruchomić OAuth Allegro', 'error');
+        toast(getRequestErrorMessage(error, 'Nie udało się uruchomić OAuth Allegro'), 'error');
       }
       return;
     }
@@ -95,9 +123,9 @@ export default function PlatformsPage() {
           queryClient.invalidateQueries({ queryKey: ['platforms'] });
           toast('OLX połączona (MOCK)', 'success');
         }
-      } catch {
+      } catch (error) {
         popup?.close();
-        toast('Nie udało się uruchomić OAuth OLX', 'error');
+        toast(getRequestErrorMessage(error, 'Nie udało się uruchomić OAuth OLX'), 'error');
       }
       return;
     }
@@ -158,6 +186,37 @@ export default function PlatformsPage() {
                       <Unplug className="h-3 w-3 mr-1" />
                       Rozłącz
                     </Button>
+                    {platform === 'OLX' && (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="w-full text-xs"
+                          onClick={() => olxDeliveryMut.mutate()}
+                          disabled={olxDeliveryMut.isPending}
+                        >
+                          {olxDeliveryMut.isPending ? 'Pobieram delivery...' : 'OLX Delivery'}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="w-full text-xs"
+                          onClick={() => olxCategoryAttrsMut.mutate()}
+                          disabled={olxCategoryAttrsMut.isPending}
+                        >
+                          {olxCategoryAttrsMut.isPending ? 'Pobieram atrybuty...' : 'OLX Attributes'}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="w-full text-xs"
+                          onClick={() => olxAdvertsMut.mutate()}
+                          disabled={olxAdvertsMut.isPending}
+                        >
+                          {olxAdvertsMut.isPending ? 'Pobieram adverts...' : 'OLX Adverts'}
+                        </Button>
+                      </>
+                    )}
                   </>
                 ) : (
                   <Button
@@ -181,4 +240,15 @@ export default function PlatformsPage() {
       </p>
     </div>
   );
+}
+
+function getRequestErrorMessage(error: unknown, fallback: string): string {
+  if (axios.isAxiosError(error)) {
+    const backendMessage = (error.response?.data as { error?: string } | undefined)?.error;
+    if (backendMessage) return backendMessage;
+  }
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+  return fallback;
 }

@@ -31,6 +31,23 @@ export async function disconnectPlatform(platform: Platform): Promise<void> {
   await apiClient.delete(`/platforms/${platform}`);
 }
 
+export async function getOlxDeliverySettings(): Promise<{ data?: unknown[]; [key: string]: unknown }> {
+  const { data } = await apiClient.get<{ data?: unknown[]; [key: string]: unknown }>('/platforms/olx/delivery/settings');
+  return data;
+}
+
+export async function getOlxCategoryAttributes(categoryId: string): Promise<{ data?: unknown[]; [key: string]: unknown }> {
+  const { data } = await apiClient.get<{ data?: unknown[]; [key: string]: unknown }>(
+    `/platforms/olx/categories/${encodeURIComponent(categoryId)}/attributes`,
+  );
+  return data;
+}
+
+export async function getOlxAdverts(): Promise<{ data?: unknown[]; [key: string]: unknown }> {
+  const { data } = await apiClient.get<{ data?: unknown[]; [key: string]: unknown }>('/platforms/olx/adverts');
+  return data;
+}
+
 export async function publishListing(listingId: string, platforms: Platform[]): Promise<{ jobCount: number }> {
   const { data } = await apiClient.post<{ jobCount: number }>(`/listings/${listingId}/publish`, { platforms });
   return data;

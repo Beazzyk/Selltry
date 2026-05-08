@@ -24,6 +24,21 @@ interface OlxAdvert {
   status?: string;
 }
 
+interface OlxDeliverySettingsResponse {
+  data?: unknown[];
+  [key: string]: unknown;
+}
+
+interface OlxCategoryAttributesResponse {
+  data?: unknown[];
+  [key: string]: unknown;
+}
+
+interface OlxAdvertsResponse {
+  data?: unknown[];
+  [key: string]: unknown;
+}
+
 export async function createAdvert(
   userId: string,
   payload: Record<string, unknown>,
@@ -35,6 +50,24 @@ export async function createAdvert(
 export async function deactivateAdvert(userId: string, advertId: number): Promise<void> {
   const token = await getValidAccessToken(userId);
   await olxRequest(token, 'POST', `/adverts/${advertId}/commands`, { command: 'deactivate' });
+}
+
+export async function getDeliverySettings(userId: string): Promise<OlxDeliverySettingsResponse> {
+  const token = await getValidAccessToken(userId);
+  return olxRequest<OlxDeliverySettingsResponse>(token, 'GET', '/delivery/settings');
+}
+
+export async function getCategoryAttributes(
+  userId: string,
+  categoryId: string,
+): Promise<OlxCategoryAttributesResponse> {
+  const token = await getValidAccessToken(userId);
+  return olxRequest<OlxCategoryAttributesResponse>(token, 'GET', `/categories/${encodeURIComponent(categoryId)}/attributes`);
+}
+
+export async function getAdverts(userId: string): Promise<OlxAdvertsResponse> {
+  const token = await getValidAccessToken(userId);
+  return olxRequest<OlxAdvertsResponse>(token, 'GET', '/adverts');
 }
 
 export function buildAdvertPayload(params: {

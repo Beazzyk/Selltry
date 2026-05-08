@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { authMiddleware } from '../middleware/auth.middleware';
 import * as ctrl from '../controllers/platform.controller';
+import * as olxCtrl from '../controllers/olx.controller';
 
 const router = Router();
 
@@ -26,5 +27,8 @@ router.post('/platforms/otomoto/connect', ctrl.connectOtomoto);
 
 // OLX OAuth
 router.get('/platforms/olx/oauth/start', ctrl.getOlxOAuthStart);
+router.get('/platforms/olx/delivery/settings', olxCtrl.getOlxDeliverySettings);
+router.get('/platforms/olx/categories/:categoryId/attributes', olxCtrl.getOlxCategoryAttributes);
+router.get('/platforms/olx/adverts', olxCtrl.getOlxAdverts);
 
 export default router;
