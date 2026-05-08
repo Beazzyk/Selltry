@@ -25,6 +25,7 @@ import {
 import { Platform } from '@/types';
 import { useToast } from '@/components/ui/toast';
 import { OtomotoConnectModal } from '@/components/platforms/OtomotoConnectModal';
+import { OAuthConnectModal } from '@/components/platforms/OAuthConnectModal';
 
 const PLATFORM_META: Record<Platform, { label: string; bg: string; initials: string; oauth: boolean }> = {
   ALLEGRO: { label: 'Allegro', bg: 'bg-orange-500', initials: 'AL', oauth: true },
@@ -49,6 +50,8 @@ export default function PlatformsPage() {
   const { toast } = useToast();
   const { data = [] } = useQuery({ queryKey: ['platforms'], queryFn: getPlatforms });
   const [isOtomotoModalOpen, setIsOtomotoModalOpen] = useState(false);
+  const [oauthPlatform, setOauthPlatform] = useState<Platform | null>(null);
+  const [isOAuthConnecting, setIsOAuthConnecting] = useState(false);
 
   useEffect(() => {
     function handleMessage(e: MessageEvent) {
@@ -162,7 +165,7 @@ export default function PlatformsPage() {
     onError: (error) => toast(getRequestErrorMessage(error, 'Nie udało się połączyć Otomoto'), 'error'),
   });
 
-  async function handleConnect(platform: Platform) {
+  async function startOAuthConnect(platform: Platform) {
     if (platform === 'ALLEGRO') {
       const popup = openOAuthPopup(); // synchronicznie — przed await
       try {
@@ -206,6 +209,13 @@ export default function PlatformsPage() {
         popup?.close();
         toast(getRequestErrorMessage(error, 'Nie udało się uruchomić OAuth eBay'), 'error');
       }
+      return;
+    }
+  }
+
+  async function handleConnect(platform: Platform) {
+    if (platform === 'ALLEGRO' || platform === 'OLX' || platform === 'EBAY') {
+      setOauthPlatform(platform);
       return;
     }
     if (platform === 'OTOMOTO') {
@@ -389,6 +399,25 @@ export default function PlatformsPage() {
         onClose={() => setIsOtomotoModalOpen(false)}
         onSubmit={async (username, password) => {
           await otomotoConnectMut.mutateAsync({ username, password });
+        }}
+      />
+      <OAuthConnectModal
+        open={!!oauthPlatform}
+        platform={oauthPlatform}
+        isSubmitting={isOAuthConnecting}
+        onClose={() => {
+          if (isOAuthConnecting) return;
+          setOauthPlatform(null);
+        }}
+        onContinue={async () => {
+          if (!oauthPlatform) return;
+          setIsOAuthConnecting(true);
+          try {
+            await startOAuthConnect(oauthPlatform);
+          } finally {
+            setIsOAuthConnecting(false);
+            setOauthPlatform(null);
+          }
         }}
       />
     </div>
