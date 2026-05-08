@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { Platform } from '@prisma/client';
 import { AppError } from '../middleware/error.middleware';
+import { encrypt } from '../utils/crypto';
 import { env } from '../utils/env';
 import { prisma } from '../utils/prisma';
 import { tryDecrypt, isExpiringSoon, storeTokens } from '../utils/token-refresh';
@@ -28,15 +29,15 @@ export async function connectWithCredentials(
       userId,
       platform: Platform.OTOMOTO,
       isActive: true,
-      accessToken: tokenResponse.access_token,
-      refreshToken: tokenResponse.refresh_token,
+      accessToken: encrypt(tokenResponse.access_token),
+      refreshToken: encrypt(tokenResponse.refresh_token),
       tokenExpiry: new Date(Date.now() + tokenResponse.expires_in * 1000),
       connectedAt: new Date(),
     },
     update: {
       isActive: true,
-      accessToken: tokenResponse.access_token,
-      refreshToken: tokenResponse.refresh_token,
+      accessToken: encrypt(tokenResponse.access_token),
+      refreshToken: encrypt(tokenResponse.refresh_token),
       tokenExpiry: new Date(Date.now() + tokenResponse.expires_in * 1000),
       connectedAt: new Date(),
     },
@@ -100,7 +101,10 @@ async function refreshToken(currentRefreshToken: string): Promise<TokenResponse>
 }
 
 function validateOAuthEnv(): void {
-  if (!env.OTOMOTO_CLIENT_ID || !env.OTOMOTO_CLIENT_SECRET) {
-    throw new AppError(400, 'Otomoto OAuth not configured. Missing: OTOMOTO_CLIENT_ID, OTOMOTO_CLIENT_SECRET');
+  const missing: string[] = [];
+  if (!env.OTOMOTO_CLIENT_ID) missing.push('OTOMOTO_CLIENT_ID');
+  if (!env.OTOMOTO_CLIENT_SECRET) missing.push('OTOMOTO_CLIENT_SECRET');
+  if (missing.length > 0) {
+    throw new AppError(400, `Otomoto OAuth not configured. Missing: ${missing.join(', ')}`);
   }
 }

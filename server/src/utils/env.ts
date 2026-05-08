@@ -42,4 +42,8 @@ export const env = {
   OLX_REDIRECT_URI: process.env.OLX_REDIRECT_URI ?? '',
   OVOKO_MOCK: process.env.OVOKO_MOCK !== 'false',
   EBAY_MOCK: process.env.EBAY_MOCK !== 'false',
+  EBAY_SANDBOX: process.env.EBAY_SANDBOX !== 'false',
+  EBAY_CLIENT_ID: process.env.EBAY_CLIENT_ID ?? '',
+  EBAY_CLIENT_SECRET: process.env.EBAY_CLIENT_SECRET ?? '',
+  EBAY_REDIRECT_URI: process.env.EBAY_REDIRECT_URI ?? '',
 };

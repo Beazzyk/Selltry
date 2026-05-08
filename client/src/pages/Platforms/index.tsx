@@ -1,28 +1,37 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2, XCircle, Plug, Unplug, FlaskConical, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   connectPlatform,
+  connectOtomoto,
   disconnectPlatform,
   getAllegroOAuthStart,
+  getEbayFulfillmentPolicies,
+  getEbayOAuthStart,
+  getEbayOffers,
+  getEbayPaymentPolicies,
+  getEbayReturnPolicies,
   getOlxAdverts,
   getOlxCategoryAttributes,
   getOlxDeliverySettings,
   getOlxOAuthStart,
   getPlatforms,
+  getOtomotoAdverts,
+  getOtomotoCategory,
   testPlatform,
 } from '@/api/platforms.api';
 import { Platform } from '@/types';
 import { useToast } from '@/components/ui/toast';
+import { OtomotoConnectModal } from '@/components/platforms/OtomotoConnectModal';
 
 const PLATFORM_META: Record<Platform, { label: string; bg: string; initials: string; oauth: boolean }> = {
   ALLEGRO: { label: 'Allegro', bg: 'bg-orange-500', initials: 'AL', oauth: true },
   OVOKO: { label: 'Ovoko', bg: 'bg-emerald-600', initials: 'OV', oauth: false },
-  OTOMOTO: { label: 'Otomoto', bg: 'bg-blue-600', initials: 'OT', oauth: false },
+  OTOMOTO: { label: 'Otomoto', bg: 'bg-blue-600', initials: 'OT', oauth: true },
   OLX: { label: 'OLX', bg: 'bg-lime-500', initials: 'OLX', oauth: true },
-  EBAY: { label: 'eBay', bg: 'bg-yellow-400', initials: 'eB', oauth: false },
+  EBAY: { label: 'eBay', bg: 'bg-yellow-400', initials: 'eB', oauth: true },
 };
 
 const PLATFORMS: Platform[] = ['ALLEGRO', 'OVOKO', 'OTOMOTO', 'OLX', 'EBAY'];
@@ -39,6 +48,7 @@ export default function PlatformsPage() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { data = [] } = useQuery({ queryKey: ['platforms'], queryFn: getPlatforms });
+  const [isOtomotoModalOpen, setIsOtomotoModalOpen] = useState(false);
 
   useEffect(() => {
     function handleMessage(e: MessageEvent) {
@@ -94,6 +104,63 @@ export default function PlatformsPage() {
     },
     onError: (error) => toast(getRequestErrorMessage(error, 'Nie udało się pobrać OLX category attributes'), 'error'),
   });
+  const ebayFulfillmentMut = useMutation({
+    mutationFn: () => getEbayFulfillmentPolicies('EBAY_US'),
+    onSuccess: (response) => {
+      const count = Array.isArray(response.fulfillmentPolicies) ? response.fulfillmentPolicies.length : 0;
+      toast(`eBay fulfillment policies: ${count} rekordów`, 'success');
+    },
+    onError: (error) => toast(getRequestErrorMessage(error, 'Nie udało się pobrać eBay fulfillment policies'), 'error'),
+  });
+  const ebayPaymentMut = useMutation({
+    mutationFn: () => getEbayPaymentPolicies('EBAY_US'),
+    onSuccess: (response) => {
+      const count = Array.isArray(response.paymentPolicies) ? response.paymentPolicies.length : 0;
+      toast(`eBay payment policies: ${count} rekordów`, 'success');
+    },
+    onError: (error) => toast(getRequestErrorMessage(error, 'Nie udało się pobrać eBay payment policies'), 'error'),
+  });
+  const ebayReturnMut = useMutation({
+    mutationFn: () => getEbayReturnPolicies('EBAY_US'),
+    onSuccess: (response) => {
+      const count = Array.isArray(response.returnPolicies) ? response.returnPolicies.length : 0;
+      toast(`eBay return policies: ${count} rekordów`, 'success');
+    },
+    onError: (error) => toast(getRequestErrorMessage(error, 'Nie udało się pobrać eBay return policies'), 'error'),
+  });
+  const ebayOffersMut = useMutation({
+    mutationFn: getEbayOffers,
+    onSuccess: (response) => {
+      const count = Array.isArray(response.offers) ? response.offers.length : 0;
+      toast(`eBay offers: ${count} rekordów`, 'success');
+    },
+    onError: (error) => toast(getRequestErrorMessage(error, 'Nie udało się pobrać eBay offers'), 'error'),
+  });
+  const otomotoCategoryMut = useMutation({
+    mutationFn: () => getOtomotoCategory('29'),
+    onSuccess: (response) => {
+      toast(`Otomoto category: ${String(response.name ?? response.id ?? 'OK')}`, 'success');
+    },
+    onError: (error) => toast(getRequestErrorMessage(error, 'Nie udało się pobrać kategorii Otomoto'), 'error'),
+  });
+  const otomotoAdvertsMut = useMutation({
+    mutationFn: getOtomotoAdverts,
+    onSuccess: (response) => {
+      const count = Array.isArray(response.data) ? response.data.length : 0;
+      toast(`Otomoto adverts: ${count} rekordów`, 'success');
+    },
+    onError: (error) => toast(getRequestErrorMessage(error, 'Nie udało się pobrać Otomoto adverts'), 'error'),
+  });
+  const otomotoConnectMut = useMutation({
+    mutationFn: (credentials: { username: string; password: string }) =>
+      connectOtomoto(credentials.username, credentials.password),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['platforms'] });
+      setIsOtomotoModalOpen(false);
+      toast('Otomoto połączona pomyślnie!', 'success');
+    },
+    onError: (error) => toast(getRequestErrorMessage(error, 'Nie udało się połączyć Otomoto'), 'error'),
+  });
 
   async function handleConnect(platform: Platform) {
     if (platform === 'ALLEGRO') {
@@ -127,6 +194,22 @@ export default function PlatformsPage() {
         popup?.close();
         toast(getRequestErrorMessage(error, 'Nie udało się uruchomić OAuth OLX'), 'error');
       }
+      return;
+    }
+    if (platform === 'EBAY') {
+      const popup = openOAuthPopup();
+      try {
+        const { authorizationUrl } = await getEbayOAuthStart();
+        if (popup) popup.location.href = authorizationUrl;
+        else window.location.href = authorizationUrl;
+      } catch (error) {
+        popup?.close();
+        toast(getRequestErrorMessage(error, 'Nie udało się uruchomić OAuth eBay'), 'error');
+      }
+      return;
+    }
+    if (platform === 'OTOMOTO') {
+      setIsOtomotoModalOpen(true);
       return;
     }
     connectMut.mutate(platform);
@@ -217,6 +300,68 @@ export default function PlatformsPage() {
                         </Button>
                       </>
                     )}
+                    {platform === 'EBAY' && (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="w-full text-xs"
+                          onClick={() => ebayFulfillmentMut.mutate()}
+                          disabled={ebayFulfillmentMut.isPending}
+                        >
+                          {ebayFulfillmentMut.isPending ? 'Pobieram fulfillment...' : 'eBay Fulfillment'}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="w-full text-xs"
+                          onClick={() => ebayPaymentMut.mutate()}
+                          disabled={ebayPaymentMut.isPending}
+                        >
+                          {ebayPaymentMut.isPending ? 'Pobieram payment...' : 'eBay Payment'}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="w-full text-xs"
+                          onClick={() => ebayReturnMut.mutate()}
+                          disabled={ebayReturnMut.isPending}
+                        >
+                          {ebayReturnMut.isPending ? 'Pobieram return...' : 'eBay Return'}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="w-full text-xs"
+                          onClick={() => ebayOffersMut.mutate()}
+                          disabled={ebayOffersMut.isPending}
+                        >
+                          {ebayOffersMut.isPending ? 'Pobieram offers...' : 'eBay Offers'}
+                        </Button>
+                      </>
+                    )}
+                    {platform === 'OTOMOTO' && (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="w-full text-xs"
+                          onClick={() => otomotoCategoryMut.mutate()}
+                          disabled={otomotoCategoryMut.isPending}
+                        >
+                          {otomotoCategoryMut.isPending ? 'Pobieram kategorię...' : 'Otomoto Category'}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="w-full text-xs"
+                          onClick={() => otomotoAdvertsMut.mutate()}
+                          disabled={otomotoAdvertsMut.isPending}
+                        >
+                          {otomotoAdvertsMut.isPending ? 'Pobieram adverts...' : 'Otomoto Adverts'}
+                        </Button>
+                      </>
+                    )}
                   </>
                 ) : (
                   <Button
@@ -238,6 +383,14 @@ export default function PlatformsPage() {
       <p className="text-xs text-gray-400">
         Tokeny dostępowe są szyfrowane AES-256 i przechowywane wyłącznie po stronie serwera.
       </p>
+      <OtomotoConnectModal
+        open={isOtomotoModalOpen}
+        isSubmitting={otomotoConnectMut.isPending}
+        onClose={() => setIsOtomotoModalOpen(false)}
+        onSubmit={async (username, password) => {
+          await otomotoConnectMut.mutateAsync({ username, password });
+        }}
+      />
     </div>
   );
 }

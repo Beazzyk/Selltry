@@ -8,6 +8,7 @@ import { encrypt } from '../utils/crypto';
 import * as allegroOAuthService from '../services/allegro-oauth.service';
 import * as otomotoOAuthService from '../services/otomoto-oauth.service';
 import * as olxOAuthService from '../services/olx-oauth.service';
+import * as ebayApiService from '../services/ebay-api.service';
 import { env } from '../utils/env';
 
 function userId(req: Request): string {
@@ -43,6 +44,24 @@ export async function connectPlatform(req: Request, res: Response, next: NextFun
     if (platform === Platform.ALLEGRO && !env.ALLEGRO_MOCK) {
       res.status(400).json({
         error: 'Use Allegro OAuth flow. Call /api/platforms/allegro/oauth/start and open authorizationUrl.',
+      });
+      return;
+    }
+    if (platform === Platform.OLX && !env.OLX_MOCK) {
+      res.status(400).json({
+        error: 'Use OLX OAuth flow. Call /api/platforms/olx/oauth/start and open authorizationUrl.',
+      });
+      return;
+    }
+    if (platform === Platform.EBAY && !env.EBAY_MOCK) {
+      res.status(400).json({
+        error: 'Use eBay OAuth flow. Call /api/platforms/ebay/oauth/start and open authorizationUrl.',
+      });
+      return;
+    }
+    if (platform === Platform.OTOMOTO && !env.OTOMOTO_MOCK) {
+      res.status(400).json({
+        error: 'Use Otomoto connect flow. Call /api/platforms/otomoto/connect with username/password.',
       });
       return;
     }
@@ -200,6 +219,14 @@ export async function testPlatformConnection(req: Request, res: Response, next: 
     if (platform === Platform.ALLEGRO && !env.ALLEGRO_MOCK) {
       const me = await allegroApiService.getAllegroMe(userId(req));
       res.json({ ok: true, message: `Allegro: zalogowany jako ${me.login}` });
+      return;
+    }
+    if (platform === Platform.EBAY && !env.EBAY_MOCK) {
+      const offers = await ebayApiService.getOffers(userId(req), 1);
+      const count = Array.isArray((offers as { offers?: unknown[] }).offers)
+        ? (offers as { offers?: unknown[] }).offers!.length
+        : 0;
+      res.json({ ok: true, message: `eBay: polaczenie aktywne (offers: ${count})` });
       return;
     }
     res.json({ ok: true, message: `${platform}: polaczenie aktywne (MOCK)` });
