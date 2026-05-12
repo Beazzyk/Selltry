@@ -12,15 +12,20 @@ export interface PublishJobData {
 }
 
 export async function preparePublish(userId: string, listingId: string, platforms: string[]): Promise<void> {
-  const marginRules = await marginService.getMarginRules(userId);
+  const [marginRules, listing] = await Promise.all([
+    marginService.getMarginRules(userId),
+    prisma.listing.findUniqueOrThrow({
+      where: { id: listingId },
+      include: { category: true },
+    }),
+  ]);
 
   await prisma.listing.update({ where: { id: listingId }, data: { status: ListingStatus.PUBLISHING } });
 
   for (const platform of platforms) {
     const rule = marginRules.find((r) => r.platform === platform);
-    const listing = await prisma.listing.findUnique({ where: { id: listingId } });
-    const finalPrice = marginService.calculateFinalPrice(Number(listing!.basePrice), rule ?? null);
-    const platformTitle = await titleGeneratorService.generateTitle(listing as never, platform as Platform);
+    const finalPrice = marginService.calculateFinalPrice(Number(listing.basePrice), rule ?? null);
+    const platformTitle = await titleGeneratorService.generateTitle(listing, platform as Platform);
 
     await prisma.platformListing.upsert({
       where: { listingId_platform: { listingId, platform: platform as Platform } },
@@ -34,19 +39,30 @@ export async function executePublish(data: PublishJobData): Promise<Record<strin
   const { userId, listingId, platforms } = data;
   const results: Record<string, string> = {};
 
+  const dbListing = await prisma.listing.findUniqueOrThrow({
+    where: { id: listingId },
+    include: { category: true, images: true },
+  });
+
   for (const platform of platforms) {
     try {
-      const categoryId = await categoryService.getExternalCategoryId(listingId, platform as Platform);
-      const dbListing = await prisma.listing.findUnique({
-        where: { id: listingId },
-        include: { category: true, images: true },
-      });
+      // Use the listing's categoryId — not the listingId itself
+      const externalCategoryId = await categoryService.getExternalCategoryId(
+        dbListing.categoryId,
+        platform as Platform,
+      );
+
       const service = getPlatformService(platform as Platform);
-      const result = await service.publishListing(dbListing!, categoryId);
+      const result = await service.publishListing(dbListing, externalCategoryId);
 
       await prisma.platformListing.update({
         where: { listingId_platform: { listingId, platform: platform as Platform } },
-        data: { externalId: result.externalId, externalUrl: result.externalUrl, status: PlatformStatus.ACTIVE, publishedAt: new Date() },
+        data: {
+          externalId: result.externalId,
+          externalUrl: result.externalUrl,
+          status: PlatformStatus.ACTIVE,
+          publishedAt: new Date(),
+        },
       });
       results[platform] = 'ACTIVE';
     } catch (err) {
@@ -71,6 +87,10 @@ async function updateListingStatus(
   const values = Object.values(results);
   const allActive = values.every((s) => s === 'ACTIVE');
   const anyActive = values.some((s) => s === 'ACTIVE');
-  const nextStatus = allActive ? ListingStatus.ACTIVE : anyActive ? ListingStatus.PARTIALLY_ACTIVE : ListingStatus.ERROR;
+  const nextStatus = allActive
+    ? ListingStatus.ACTIVE
+    : anyActive
+      ? ListingStatus.PARTIALLY_ACTIVE
+      : ListingStatus.ERROR;
   await prisma.listing.update({ where: { id: listingId }, data: { status: nextStatus } });
 }

@@ -13,7 +13,7 @@ process.env.OLX_MOCK = 'true';
 
 jest.mock('../../src/utils/prisma', () => ({
   prisma: {
-    listing: { update: jest.fn(), findUnique: jest.fn() },
+    listing: { update: jest.fn(), findUnique: jest.fn(), findUniqueOrThrow: jest.fn() },
     platformListing: { upsert: jest.fn(), update: jest.fn() },
   },
 }));
@@ -43,12 +43,9 @@ const JOB_DATA = { userId: 'user-1', listingId: 'listing-1', platforms: ['ALLEGR
 
 beforeEach(() => {
   jest.clearAllMocks();
-  (mockPrisma.listing.findUnique as jest.Mock).mockResolvedValue({
-    id: 'listing-1',
-    basePrice: 100,
-    categoryId: 'cat-1',
-    userId: 'user-1',
-  });
+  const mockListing = { id: 'listing-1', basePrice: 100, categoryId: 'cat-1', userId: 'user-1', category: { id: 'cat-1', name: 'Test' } };
+  (mockPrisma.listing.findUnique as jest.Mock).mockResolvedValue(mockListing);
+  (mockPrisma.listing.findUniqueOrThrow as jest.Mock).mockResolvedValue(mockListing);
   (mockPrisma.listing.update as jest.Mock).mockResolvedValue({});
   (mockPrisma.platformListing.upsert as jest.Mock).mockResolvedValue({});
   (mockPrisma.platformListing.update as jest.Mock).mockResolvedValue({});
