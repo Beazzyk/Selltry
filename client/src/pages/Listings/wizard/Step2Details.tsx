@@ -25,14 +25,6 @@ const PART_SIDES = ['Lewa', 'Prawa', 'Nie dotyczy'];
 export function Step2Details({ data, onChange }: Props) {
   const { generate, loading: aiLoading, error: aiError } = useDescriptionGenerator();
 
-  function autoGenerateTitle() {
-    const parts: string[] = [];
-    if (data.partSide && data.partSide !== 'Nie dotyczy') parts.push(data.partSide.toLowerCase());
-    if (data.condition === 'USED') parts.push('używana');
-    if (data.condition === 'DAMAGED') parts.push('uszkodzona');
-    if (parts.length) onChange({ title: parts.join(' ') });
-  }
-
   return (
     <div className="space-y-6">
       <div>
@@ -76,13 +68,8 @@ export function Step2Details({ data, onChange }: Props) {
       )}
 
       <div>
-        <div className="flex items-center justify-between mb-1">
-          <Label htmlFor="title">Tytuł ogłoszenia *</Label>
-          <button type="button" onClick={autoGenerateTitle} className="text-xs text-primary-600 hover:underline">
-            Generuj automatycznie
-          </button>
-        </div>
-        <Input id="title" placeholder="np. Lampa tylna Suzuki Samurai 1990 prawa"
+        <Label htmlFor="title">Tytuł ogłoszenia *</Label>
+        <Input id="title" className="mt-1" placeholder="np. Lampa tylna Suzuki Samurai 1990 prawa"
           value={data.title ?? ''} onChange={(e) => onChange({ title: e.target.value || undefined })} maxLength={200} />
         <p className="text-xs text-gray-400 mt-1 text-right">{(data.title ?? '').length}/200</p>
         {data.platformTitles && (
@@ -99,7 +86,7 @@ export function Step2Details({ data, onChange }: Props) {
           <Label htmlFor="description">Opis *</Label>
           <Button type="button" size="sm" variant="outline"
             onClick={() => void generate(data, onChange)}
-            disabled={aiLoading || !data.title || !data.condition}
+            disabled={aiLoading}
             className="gap-1.5 text-primary-600 border-primary-200 hover:bg-primary-50"
           >
             {aiLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}

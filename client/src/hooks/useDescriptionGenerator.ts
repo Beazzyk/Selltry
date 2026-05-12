@@ -7,8 +7,8 @@ export function useDescriptionGenerator() {
   const [error, setError] = useState<string | null>(null);
 
   async function generate(data: WizardData, onChange: (patch: Partial<WizardData>) => void) {
-    if (!data.condition || !data.title) {
-      setError('Wypełnij najpierw tytuł i stan produktu');
+    if (!data.categoryType) {
+      setError('Wybierz najpierw kategorię');
       return;
     }
 
@@ -18,18 +18,18 @@ export function useDescriptionGenerator() {
     try {
       const attrs = data.attributes ?? {};
       const result = await generateDescription({
-        categoryType: data.categoryType ?? 'OTHER',
+        categoryType: data.categoryType,
         brand: typeof attrs.brand === 'string' ? attrs.brand : undefined,
         productModel: typeof attrs.productModel === 'string' ? attrs.productModel : undefined,
-        condition: data.condition,
-        title: data.title,
+        condition: data.condition ?? 'USED',
+        title: data.title ?? '',
         partSide: data.partSide,
         vehicleYear: data.vehicleYearRaw,
         attributes: attrs,
       });
 
       onChange({
-        title: result.title || data.title,
+        ...(result.title ? { title: result.title } : {}),
         platformTitles: result.platformTitles,
         description: result.description,
       });

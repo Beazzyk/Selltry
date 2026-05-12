@@ -71,64 +71,75 @@ function buildPrompt(input: DescriptionInput): string {
     : `- ALLEGRO (max ${TITLE_LIMITS.ALLEGRO} znaków): marka + model + główna cecha + stan + słowa kluczowe SEO
 - OLX (max ${TITLE_LIMITS.OLX} znaków): skondensowana wersja z najważniejszymi frazami`;
 
-  return `Jesteś ekspertem SEO i copywriterem dla polskich marketplace.
-Dla podanego produktu wygeneruj TYTUŁY i OPIS MARKETINGOWY.
+  const productLine = [
+    input.brand,
+    input.productModel,
+    input.vehicleMake,
+    input.vehicleModel,
+    input.vehicleYear,
+  ].filter(Boolean).join(' ');
 
-DANE PRODUKTU:
-Tytuł bazowy: ${input.title}
-Kategoria: ${CATEGORY_CONTEXT[input.categoryType] ?? input.categoryType}
-Stan: ${CONDITION_PL[input.condition] ?? input.condition}
+  const productLabel = productLine || input.title || (CATEGORY_CONTEXT[input.categoryType] ?? 'produkt');
+
+  return `Napisz ogłoszenie sprzedażowe po polsku dla: ${productLabel}.
+Stan: ${CONDITION_PL[input.condition] ?? 'używany'}.
 ${productInfo}
 
-ZASADY TYTUŁÓW:
-• Używaj słów kluczowych które kupujący wpisują w wyszukiwarce
-• Umieszczaj najważniejsze informacje na początku (marka, model, typ produktu)
-• Dla używanych: podaj rok, stan, markę
-• Nie używaj CAPS LOCK dla całego tytułu — tylko pierwsza litera wyrazu
-• Unikaj zbędnych znaków interpunkcyjnych
+STYL PISANIA — przestrzegaj bezwzględnie:
+- Pisz jak prawdziwy sprzedawca na Allegro/OLX, nie jak asystent AI
+- Żadnych zwrotów: "Świetna okazja", "Nie przegap", "Idealne dla", "Z przyjemnością", "Zapraszam"
+- Żadnych nadmiarowych myślników ani wielokropków (... --- –––)
+- Żadnych gwiazdek *tekst* ani podkreśleń __tekst__
+- Nie zaczynaj zdań od "To", "Jest to", "Oferuję Państwu"
+- Emoji TYLKO jako ikony sekcji w nagłówkach h3, nie w treści akapitów ani listy
+- Konkretne dane techniczne z wiedzy o ${productLine} — nie pisz "zależy od modelu"
+- Zwięzłe, rzeczowe zdania. Opis max 3 zdania. Każdy punkt listy max 10 słów.
 
-WYMAGANY FORMAT ODPOWIEDZI (dokładnie taka struktura, bez żadnych dodatkowych komentarzy):
+TYTUŁY — słowa kluczowe tak jak wpisuje je kupujący w wyszukiwarkę:
+${isAuto
+  ? `- Dla aut: [część] [marka pojazdu] [model] [rok] [strona L/P] [stan]`
+  : `- [marka] [model] [kluczowa cecha] [stan]`}
+- Pierwsza litera wielka, reszta małe. Zero interpunkcji na końcu.
+
+FORMAT (zwróć dokładnie tę strukturę, nic więcej):
 
 <titles>
-<main>${isAuto ? '[Marka pojazdu] [Model] [rok] [część] [strona] [stan] — SEO-friendly max 70 znaków' : '[Marka] [Model] [główna cecha] [stan] — SEO max 65 znaków'}</main>
-<ALLEGRO>${titleInstructions.split('\n')[0].replace(/^- ALLEGRO.*: /, '')}</ALLEGRO>
-<OLX>${titleInstructions.split('\n')[1].replace(/^- OLX.*: /, '')}</OLX>
-${isAuto ? '<OTOMOTO>[tytuł zoptymalizowany pod Otomoto max 80 znaków]</OTOMOTO>' : ''}
+<main>${isAuto ? 'część marka model rok strona stan — max 68 znaków' : 'marka model główna cecha stan — max 65 znaków'}</main>
+<ALLEGRO>tytuł SEO max ${TITLE_LIMITS.ALLEGRO} znaków — słowa kluczowe kupującego</ALLEGRO>
+<OLX>tytuł max ${TITLE_LIMITS.OLX} znaków — najważniejsze frazy</OLX>
+${isAuto ? `<OTOMOTO>tytuł max ${TITLE_LIMITS.OTOMOTO} znaków pod Otomoto</OTOMOTO>` : ''}
 </titles>
 <description>
 <div class="listing-description">
 
-<h3>📦 Opis produktu</h3>
-<p>[2-3 zdania marketingowego opisu — korzyści dla kupującego, unikalna wartość]</p>
+<h3>Opis</h3>
+<p>[Max 3 konkretne zdania. Fakty, nie marketing. Co to jest, do czego służy, dlaczego warto.]</p>
 
-<h3>✅ Kluczowe cechy</h3>
+<h3>Cechy</h3>
 <ul>
-[5-8 punktów z emoji — najważniejsze cechy i zalety TEGO KONKRETNEGO modelu]
+[5-7 krótkich punktów — tylko fakty techniczne, bez owijania w bawełnę]
 </ul>
 
-<h3>🔧 Specyfikacja techniczna</h3>
+<h3>Specyfikacja</h3>
 <table>
 <tr><th>Parametr</th><th>Wartość</th></tr>
-[Uzupełnij z wiedzy o modelu ${input.brand ?? ''} ${input.productModel ?? ''} — minimum 6 wierszy z konkretnymi danymi]
+[Min 6 wierszy z rzeczywistymi danymi dla ${productLine || 'tego modelu'} — bez pustych pól]
 </table>
 
-<h3>📐 Wymiary i waga</h3>
-<p>[Rzeczywiste wymiary i waga produktu dla tego modelu]</p>
+<h3>Wymiary</h3>
+<p>[Konkretne wymiary i waga. Jeśli nie znasz dokładnych — podaj przybliżone dla tego modelu.]</p>
 
-<h3>${isAuto ? '🚗 Kompatybilność pojazdów' : '🔗 Zastosowanie i kompatybilność'}</h3>
-<p>[${isAuto ? 'Lista pasujących pojazdów/silników' : 'Zakres zastosowania, kompatybilność z innymi urządzeniami/systemami'}]</p>
+<h3>${isAuto ? 'Pasuje do' : 'Zastosowanie'}</h3>
+<p>[${isAuto ? 'Modele pojazdów/silniki. Lista, nie akapit.' : 'Do czego służy, z czym współpracuje.'}]</p>
 
-<h3>⭐ Stan produktu</h3>
-<p>[Szczegółowy opis stanu: ${CONDITION_PL[input.condition] ?? input.condition}]</p>
+<h3>Stan</h3>
+<p>[Rzetelny opis stanu. ${CONDITION_PL[input.condition] ?? ''}. Co działa, co ewentualnie wymaga uwagi.]</p>
 
-<h3>📬 Wysyłka i pakowanie</h3>
-<p>[Informacje o pakowaniu, kurierze, odbiorze osobistym]</p>
+<h3>Wysyłka</h3>
+<p>[Jedno zdanie: opakowanie i czas wysyłki.]</p>
 
 </div>
-</description>
-
-WAŻNE: Zwróć TYLKO powyższą strukturę XML, bez żadnego dodatkowego tekstu przed ani po.
-Wszystkie treści w języku polskim. Bądź konkretny — podawaj rzeczywiste dane techniczne.`;
+</description>`;
 }
 
 function parseResponse(raw: string): GenerateResult {

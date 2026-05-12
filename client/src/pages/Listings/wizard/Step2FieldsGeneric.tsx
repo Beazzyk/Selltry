@@ -128,7 +128,7 @@ export function Step2FieldsGeneric({ data, onChange }: Props) {
           <Label>Opis *</Label>
           <Button type="button" size="sm" variant="outline"
             onClick={() => void generate(data, onChange)}
-            disabled={aiLoading || !data.title || !data.condition}
+            disabled={aiLoading}
             className="gap-1.5 text-primary-600 border-primary-200 hover:bg-primary-50"
           >
             {aiLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
