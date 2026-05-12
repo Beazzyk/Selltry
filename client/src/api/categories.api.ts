@@ -1,8 +1,20 @@
 import apiClient from './client';
-import { InternalCategory, VehicleMake, VehicleModel, VehicleGeneration, VehicleType } from '../types';
+import { CategoryType, InternalCategory, VehicleMake, VehicleModel, VehicleGeneration, VehicleType } from '../types';
 
-export async function getCategories(): Promise<InternalCategory[]> {
-  const { data } = await apiClient.get<InternalCategory[]>('/categories');
+export interface CategoryTypeInfo {
+  type: CategoryType;
+  count: number;
+}
+
+export async function getCategoryTypes(): Promise<CategoryTypeInfo[]> {
+  const { data } = await apiClient.get<CategoryTypeInfo[]>('/category-types');
+  return data;
+}
+
+export async function getCategories(type?: CategoryType): Promise<InternalCategory[]> {
+  const { data } = await apiClient.get<InternalCategory[]>('/categories', {
+    params: type ? { type } : {},
+  });
   return data;
 }
 

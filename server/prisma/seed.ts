@@ -1,4 +1,4 @@
-import { PrismaClient, Platform, VehicleType } from '@prisma/client';
+import { PrismaClient, Platform, VehicleType, CategoryType } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -211,18 +211,99 @@ async function seedInternalCategories() {
     },
   ];
 
+  const nonAutoTree = [
+    {
+      name: 'Elektronika', slug: 'electronics-root', type: CategoryType.ELECTRONICS,
+      children: [
+        { name: 'Smartfony', slug: 'smartphones' },
+        { name: 'Laptopy', slug: 'laptops' },
+        { name: 'Tablety', slug: 'tablets' },
+        { name: 'TV i monitory', slug: 'tv-monitors' },
+        { name: 'Audio i Hi-Fi', slug: 'audio-hifi' },
+        { name: 'Gry i konsole', slug: 'games-consoles' },
+        { name: 'Foto i kamery', slug: 'photo-cameras' },
+        { name: 'Inne elektronika', slug: 'electronics-other' },
+      ],
+    },
+    {
+      name: 'Dom i ogród', slug: 'home-garden', type: CategoryType.HOME_GARDEN,
+      children: [
+        { name: 'Meble', slug: 'furniture' },
+        { name: 'Oświetlenie domowe', slug: 'home-lighting' },
+        { name: 'AGD', slug: 'home-appliances' },
+        { name: 'Dekoracje', slug: 'decorations' },
+        { name: 'Ogród', slug: 'garden' },
+        { name: 'Inne dom i ogród', slug: 'home-garden-other' },
+      ],
+    },
+    {
+      name: 'Moda', slug: 'fashion', type: CategoryType.FASHION,
+      children: [
+        { name: 'Odzież damska', slug: 'womens-clothing' },
+        { name: 'Odzież męska', slug: 'mens-clothing' },
+        { name: 'Obuwie', slug: 'footwear' },
+        { name: 'Akcesoria', slug: 'accessories' },
+        { name: 'Inne moda', slug: 'fashion-other' },
+      ],
+    },
+    {
+      name: 'Sport', slug: 'sport', type: CategoryType.SPORT,
+      children: [
+        { name: 'Rowery', slug: 'bicycles' },
+        { name: 'Fitness i siłownia', slug: 'fitness' },
+        { name: 'Sporty zimowe', slug: 'winter-sports' },
+        { name: 'Sporty wodne', slug: 'water-sports' },
+        { name: 'Inne sport', slug: 'sport-other' },
+      ],
+    },
+    {
+      name: 'Narzędzia', slug: 'tools', type: CategoryType.TOOLS,
+      children: [
+        { name: 'Elektronarzędzia', slug: 'power-tools' },
+        { name: 'Narzędzia ręczne', slug: 'hand-tools' },
+        { name: 'Maszyny', slug: 'machines' },
+        { name: 'Inne narzędzia', slug: 'tools-other' },
+      ],
+    },
+    {
+      name: 'Inne', slug: 'other-root', type: CategoryType.OTHER,
+      children: [
+        { name: 'Zabawki', slug: 'toys' },
+        { name: 'Książki i muzyka', slug: 'books-music' },
+        { name: 'Zdrowie i uroda', slug: 'health-beauty' },
+        { name: 'Pozostałe', slug: 'misc' },
+      ],
+    },
+  ];
+
   for (const parent of tree) {
     const parentRecord = await prisma.internalCategory.upsert({
       where: { slug: parent.slug },
-      update: {},
-      create: { name: parent.name, slug: parent.slug },
+      update: { categoryType: CategoryType.AUTOMOTIVE },
+      create: { name: parent.name, slug: parent.slug, categoryType: CategoryType.AUTOMOTIVE },
     });
 
     for (const child of parent.children) {
       await prisma.internalCategory.upsert({
         where: { slug: child.slug },
-        update: {},
-        create: { name: child.name, slug: child.slug, parentId: parentRecord.id },
+        update: { categoryType: CategoryType.AUTOMOTIVE },
+        create: { name: child.name, slug: child.slug, parentId: parentRecord.id, categoryType: CategoryType.AUTOMOTIVE },
+      });
+    }
+  }
+
+  for (const parent of nonAutoTree) {
+    const parentRecord = await prisma.internalCategory.upsert({
+      where: { slug: parent.slug },
+      update: { categoryType: parent.type },
+      create: { name: parent.name, slug: parent.slug, categoryType: parent.type },
+    });
+
+    for (const child of parent.children) {
+      await prisma.internalCategory.upsert({
+        where: { slug: child.slug },
+        update: { categoryType: parent.type },
+        create: { name: child.name, slug: child.slug, parentId: parentRecord.id, categoryType: parent.type },
       });
     }
   }
@@ -231,10 +312,15 @@ async function seedInternalCategories() {
 }
 
 async function seedMockCategoryMappings() {
-  const platforms = [Platform.ALLEGRO, Platform.OVOKO, Platform.OTOMOTO, Platform.OLX, Platform.EBAY];
+  const autoPlatforms = [Platform.ALLEGRO, Platform.OVOKO, Platform.OTOMOTO, Platform.OLX];
+  const universalPlatforms = [Platform.ALLEGRO, Platform.OLX];
+
   const categories = await prisma.internalCategory.findMany({ where: { parentId: { not: null } } });
 
   for (const category of categories) {
+    const isAuto = category.categoryType === CategoryType.AUTOMOTIVE;
+    const platforms = isAuto ? autoPlatforms : universalPlatforms;
+
     for (const platform of platforms) {
       await prisma.platformCategoryMapping.upsert({
         where: { internalCategoryId_platform: { internalCategoryId: category.id, platform } },

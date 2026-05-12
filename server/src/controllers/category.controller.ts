@@ -1,10 +1,24 @@
 import { Request, Response, NextFunction } from 'express';
+import { CategoryType } from '@prisma/client';
 import * as categoryService from '../services/category.service';
 
 export async function getCategories(req: Request, res: Response, next: NextFunction) {
   try {
-    const tree = await categoryService.getCategoryTree();
+    const { type } = req.query;
+    const validType = type && Object.values(CategoryType).includes(type as CategoryType)
+      ? (type as CategoryType)
+      : undefined;
+    const tree = await categoryService.getCategoryTree(validType);
     res.json(tree);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getCategoryTypes(req: Request, res: Response, next: NextFunction) {
+  try {
+    const types = await categoryService.getCategoryTypes();
+    res.json(types);
   } catch (err) {
     next(err);
   }
