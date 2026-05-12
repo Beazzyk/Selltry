@@ -28,8 +28,13 @@ export function useDescriptionGenerator() {
         attributes: attrs,
       });
 
+      const bestTitle = result.title
+        || result.platformTitles?.ALLEGRO
+        || result.platformTitles?.OLX
+        || '';
+
       onChange({
-        ...(result.title ? { title: result.title } : {}),
+        ...(bestTitle ? { title: bestTitle } : {}),
         platformTitles: result.platformTitles,
         description: result.description,
       });

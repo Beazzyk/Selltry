@@ -81,21 +81,26 @@ function buildPrompt(input: DescriptionInput): string {
 
   const productLabel = productLine || input.title || (CATEGORY_CONTEXT[input.categoryType] ?? 'produkt');
 
-  return `Napisz ogłoszenie sprzedażowe po polsku dla: ${productLabel}.
-Stan: ${CONDITION_PL[input.condition] ?? 'używany'}.
+  return `Wygeneruj ogłoszenie sprzedażowe na polskie marketplace.
+
+DANE (użyj wszystkich dostępnych, brakujące pomiń lub uzupełnij z wiedzy ogólnej):
+Kategoria: ${CATEGORY_CONTEXT[input.categoryType] ?? input.categoryType}
+Produkt: ${productLabel}
+Stan: ${CONDITION_PL[input.condition] ?? 'używany'}
 ${productInfo}
 
-STYL PISANIA — przestrzegaj bezwzględnie:
-- Pisz jak prawdziwy sprzedawca na Allegro/OLX, nie jak asystent AI
-- Żadnych zwrotów: "Świetna okazja", "Nie przegap", "Idealne dla", "Z przyjemnością", "Zapraszam"
-- Żadnych nadmiarowych myślników ani wielokropków (... --- –––)
-- Żadnych gwiazdek *tekst* ani podkreśleń __tekst__
-- Nie zaczynaj zdań od "To", "Jest to", "Oferuję Państwu"
-- Emoji TYLKO jako ikony sekcji w nagłówkach h3, nie w treści akapitów ani listy
-- Konkretne dane techniczne z wiedzy o ${productLine} — nie pisz "zależy od modelu"
-- Zwięzłe, rzeczowe zdania. Opis max 3 zdania. Każdy punkt listy max 10 słów.
+ZASADA NADRZĘDNA: Zawsze zwróć kompletną odpowiedź w wymaganym formacie XML.
+Jeśli brakuje konkretnych danych — uzupełnij je z ogólnej wiedzy o tej kategorii produktu.
+Nigdy nie odmawiaj generowania ani nie proś o więcej informacji.
 
-TYTUŁY — słowa kluczowe tak jak wpisuje je kupujący w wyszukiwarkę:
+STYL — pisz jak sprzedawca na Allegro, nie jak asystent AI:
+- Żadnych: "Świetna okazja", "Nie przegap", "Idealne dla", "Z przyjemnością"
+- Żadnych: nadmiarowych myślników (--- –––), gwiazdek *tekst*, wielokropków
+- Emoji tylko w nagłówkach h3, nie w tekście ani liście
+- Opis max 3 zdania — fakty, nie marketing
+- Każdy punkt listy max 10 słów
+
+TYTUŁY — słowa kluczowe jak wpisuje kupujący w wyszukiwarkę:
 ${isAuto
   ? `- Dla aut: [część] [marka pojazdu] [model] [rok] [strona L/P] [stan]`
   : `- [marka] [model] [kluczowa cecha] [stan]`}
@@ -171,30 +176,32 @@ function parseResponse(raw: string): GenerateResult {
 }
 
 function mockResult(input: DescriptionInput): GenerateResult {
-  const base = input.title;
   const brand = input.brand ?? '';
   const model = input.productModel ?? '';
-  const cond = CONDITION_PL[input.condition] ?? '';
+  const cond = CONDITION_PL[input.condition] ?? 'używany';
+  const base = input.title
+    || [brand, model, CATEGORY_CONTEXT[input.categoryType]].filter(Boolean).join(' ')
+    || 'Produkt';
 
   const description = `<div class="listing-description">
-<h3>📦 Opis produktu</h3>
-<p>Oferuję ${base}. Produkt w stanie: <strong>${cond}</strong>. Gotowy do wysyłki.</p>
-<h3>✅ Kluczowe cechy</h3>
+<h3>📦 Opis</h3>
+<p>${base}${brand ? ` marki ${brand}` : ''}${model ? ` model ${model}` : ''}. Stan: ${cond}. Gotowe do wysyłki następnego dnia roboczego.</p>
+<h3>✅ Cechy</h3>
 <ul>
-<li>🏷️ Marka: ${brand} ${model}</li>
-<li>📦 Stan: ${cond}</li>
-<li>✅ Sprawdzony przed wysyłką</li>
-<li>🚀 Wysyłka w 24h</li>
+${brand ? `<li>Marka: ${brand}</li>` : ''}
+${model ? `<li>Model: ${model}</li>` : ''}
+<li>Stan: ${cond}</li>
+<li>Sprawdzony przed wysyłką</li>
 </ul>
-<h3>🔧 Specyfikacja techniczna</h3>
+<h3>🔧 Specyfikacja</h3>
 <table>
 <tr><th>Parametr</th><th>Wartość</th></tr>
-<tr><td>Marka</td><td>${brand}</td></tr>
-<tr><td>Model</td><td>${model}</td></tr>
+${brand ? `<tr><td>Marka</td><td>${brand}</td></tr>` : ''}
+${model ? `<tr><td>Model</td><td>${model}</td></tr>` : ''}
 <tr><td>Stan</td><td>${cond}</td></tr>
 </table>
-<h3>📬 Wysyłka i pakowanie</h3>
-<p>Starannie zapakowane, wysyłka kurierem DPD/DHL w ciągu 24h.</p>
+<h3>📬 Wysyłka</h3>
+<p>Bezpieczne opakowanie, wysyłka kurierem w 24h od płatności.</p>
 </div>`;
 
   return {
