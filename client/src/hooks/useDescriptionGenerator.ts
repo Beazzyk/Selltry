@@ -19,11 +19,14 @@ export function useDescriptionGenerator() {
       const attrs = data.attributes ?? {};
       const result = await generateDescription({
         categoryType: data.categoryType,
+        categoryName: data.categoryName,
         brand: typeof attrs.brand === 'string' ? attrs.brand : undefined,
         productModel: typeof attrs.productModel === 'string' ? attrs.productModel : undefined,
         condition: data.condition ?? 'USED',
         title: data.title ?? '',
         partSide: data.partSide,
+        vehicleMake: data.vehicleMakeName,
+        vehicleModel: data.vehicleModelName,
         vehicleYear: data.vehicleYearRaw,
         attributes: attrs,
       });

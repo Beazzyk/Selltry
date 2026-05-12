@@ -23,13 +23,18 @@ export interface WizardData {
   catalogNumber?: string;
   vehicleType: VehicleType;
   vehicleMakeId?: string;
+  vehicleMakeName?: string;
   vehicleModelId?: string;
+  vehicleModelName?: string;
   vehicleGenId?: string;
   vehicleYearRaw?: number;
   vehicleEngine?: string;
   partSide?: string;
   partDetails?: string;
   damageDescription?: string;
+
+  // Category name (for AI context)
+  categoryName?: string;
 
   // Step 2 — Generic (non-automotive)
   attributes: ListingAttributes;

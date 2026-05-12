@@ -30,7 +30,7 @@ export function Step1Category({ data, onChange }: Props) {
   const subcategories = categories.flatMap((root) => root.children ?? []);
 
   function selectType(type: CategoryType) {
-    onChange({ categoryType: type, categoryId: undefined });
+    onChange({ categoryType: type, categoryId: undefined, categoryName: undefined });
   }
 
   return (
@@ -64,7 +64,7 @@ export function Step1Category({ data, onChange }: Props) {
               <button
                 key={cat.id}
                 type="button"
-                onClick={() => onChange({ categoryId: cat.id })}
+                onClick={() => onChange({ categoryId: cat.id, categoryName: cat.name })}
                 className={cn(
                   'rounded-lg border px-3 py-2 text-sm text-left transition-colors',
                   data.categoryId === cat.id

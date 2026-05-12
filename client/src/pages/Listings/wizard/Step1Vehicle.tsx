@@ -56,7 +56,7 @@ export function Step1Vehicle({ data, onChange }: Props) {
   }, [data.vehicleType]);
 
   useEffect(() => {
-    onChange({ vehicleModelId: undefined, vehicleGenId: undefined });
+    onChange({ vehicleModelId: undefined, vehicleModelName: undefined, vehicleGenId: undefined });
   }, [data.vehicleMakeId]);
 
   useEffect(() => {
@@ -198,7 +198,7 @@ export function Step1Vehicle({ data, onChange }: Props) {
                   key={make.id}
                   type="button"
                   onClick={() => {
-                    onChange({ vehicleMakeId: make.id });
+                    onChange({ vehicleMakeId: make.id, vehicleMakeName: make.name });
                     setMakeSearch(make.name);
                     setMakeDropdownOpen(false);
                   }}
@@ -248,7 +248,7 @@ export function Step1Vehicle({ data, onChange }: Props) {
                     key={model.id}
                     type="button"
                     onClick={() => {
-                      onChange({ vehicleModelId: model.id });
+                      onChange({ vehicleModelId: model.id, vehicleModelName: model.name });
                       setModelSearch(model.name);
                       setModelDropdownOpen(false);
                     }}
