@@ -6,6 +6,7 @@ import { CategoryType } from '@/types';
 import { BrandSelect } from '@/components/shared/BrandSelect';
 import { useDescriptionGenerator } from '@/hooks/useDescriptionGenerator';
 import { PlatformTitleSuggestions } from '@/components/listings/PlatformTitleSuggestions';
+import { DescriptionEditor } from '@/components/listings/DescriptionEditor';
 import { WizardData } from './types';
 
 const CONDITION_OPTIONS = [
@@ -135,20 +136,16 @@ export function Step2FieldsGeneric({ data, onChange }: Props) {
           </Button>
         </div>
         {aiError && <p className="text-xs text-red-500 mb-1">{aiError}</p>}
-        {data.description && data.description.startsWith('<') ? (
-          <div className="mt-1 rounded-md border border-gray-200 p-3 bg-gray-50 text-xs text-gray-500 max-h-40 overflow-y-auto">
-            <div dangerouslySetInnerHTML={{ __html: data.description }} />
-          </div>
+        {data.description?.startsWith('<') ? (
+          <DescriptionEditor
+            value={data.description}
+            onChange={(html) => onChange({ description: html })}
+            onClear={() => onChange({ description: '' })}
+          />
         ) : (
           <textarea className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm min-h-[100px]"
             placeholder="Szczegółowy opis produktu lub wygeneruj AI..."
             value={data.description ?? ''} onChange={(e) => onChange({ description: e.target.value })} />
-        )}
-        {data.description?.startsWith('<') && (
-          <button type="button" className="text-xs text-primary-600 hover:underline mt-1"
-            onClick={() => onChange({ description: '' })}>
-            Wyczyść i wpisz ręcznie
-          </button>
         )}
       </div>
     </div>

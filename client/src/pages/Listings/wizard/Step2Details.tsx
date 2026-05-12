@@ -7,6 +7,7 @@ import { WizardData } from './types';
 import { Condition } from '@/types';
 import { useDescriptionGenerator } from '@/hooks/useDescriptionGenerator';
 import { PlatformTitleSuggestions } from '@/components/listings/PlatformTitleSuggestions';
+import { DescriptionEditor } from '@/components/listings/DescriptionEditor';
 
 interface Props {
   data: WizardData;
@@ -107,23 +108,22 @@ export function Step2Details({ data, onChange }: Props) {
         </div>
         {aiError && <p className="text-xs text-red-500 mb-1">{aiError}</p>}
         {data.description?.startsWith('<') ? (
-          <div className="rounded-md border border-gray-200 p-3 bg-gray-50 text-sm text-gray-700 max-h-48 overflow-y-auto">
-            <div dangerouslySetInnerHTML={{ __html: data.description }} />
-          </div>
-        ) : (
-          <textarea id="description" rows={5} placeholder="Opisz część, jej stan, pasujące pojazdy lub wygeneruj AI..."
-            value={data.description ?? ''}
-            onChange={(e) => onChange({ description: e.target.value || undefined })}
-            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+          <DescriptionEditor
+            value={data.description}
+            onChange={(html) => onChange({ description: html })}
+            onClear={() => onChange({ description: undefined })}
           />
-        )}
-        {data.description?.startsWith('<') ? (
-          <button type="button" className="text-xs text-primary-600 hover:underline mt-1"
-            onClick={() => onChange({ description: undefined })}>Wyczyść i wpisz ręcznie</button>
         ) : (
-          <p className={cn('text-xs mt-1 text-right', (data.description?.length ?? 0) < 10 ? 'text-red-400' : 'text-gray-400')}>
-            {data.description?.length ?? 0} znaków
-          </p>
+          <>
+            <textarea id="description" rows={5} placeholder="Opisz część, jej stan, pasujące pojazdy lub wygeneruj AI..."
+              value={data.description ?? ''}
+              onChange={(e) => onChange({ description: e.target.value || undefined })}
+              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            />
+            <p className={cn('text-xs mt-1 text-right', (data.description?.length ?? 0) < 10 ? 'text-red-400' : 'text-gray-400')}>
+              {data.description?.length ?? 0} znaków
+            </p>
+          </>
         )}
       </div>
 
