@@ -92,7 +92,7 @@ export function buildAdvertPayload(params: {
     description: params.description,
     category_id: Number(params.categoryId),
     advertiser_type: 'business',
-    contact: { name: 'AutoLister' },
+    contact: { name: 'Selltry' },
     attributes: [
       { code: 'price', value: String(params.basePrice) },
       { code: 'price_type', value: 'fixed' },

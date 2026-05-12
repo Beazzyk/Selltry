@@ -29,7 +29,7 @@ export const env = {
   ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY ?? '',
   ALLEGRO_SANDBOX: process.env.ALLEGRO_SANDBOX !== 'false',
   ALLEGRO_USER_AGENT:
-    process.env.ALLEGRO_USER_AGENT ?? 'AutoLister/0.1.0 (+https://example.com/autolister)',
+    process.env.ALLEGRO_USER_AGENT ?? 'Selltry/0.1.0 (+https://selltry.pl)',
   ALLEGRO_CLIENT_ID: process.env.ALLEGRO_CLIENT_ID ?? '',
   ALLEGRO_CLIENT_SECRET: process.env.ALLEGRO_CLIENT_SECRET ?? '',
   ALLEGRO_REDIRECT_URI: process.env.ALLEGRO_REDIRECT_URI ?? '',

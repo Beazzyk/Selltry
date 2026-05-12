@@ -1,7 +1,7 @@
-# AutoLister SaaS — CLAUDE.md
+# Selltry SaaS — CLAUDE.md
 
 ## Opis projektu
-Wieloplatformowe narzędzie SaaS do wystawiania ogłoszeń części samochodowych/motocyklowych na Allegro, Ovoko, Otomoto, OLX i eBay z jednego panelu.
+Selltry — wieloplatformowe narzędzie SaaS do wystawiania ogłoszeń (motoryzacja, elektronika, moda, sport, narzędzia i inne) na Allegro, Ovoko, Otomoto i OLX z jednego panelu.
 
 ## Architektura
 Modular monolith — monorepo z dwoma pakietami:

@@ -27,7 +27,7 @@ export function Sidebar({ onNavigate }: SidebarProps) {
   return (
     <aside className="flex h-full w-60 flex-col bg-gray-900 text-white">
       <div className="flex h-16 items-center px-6 border-b border-gray-800">
-        <span className="text-lg font-bold text-white">AutoLister</span>
+        <span className="text-lg font-bold text-white">Selltry</span>
       </div>
 
       <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
