@@ -24,6 +24,7 @@ router.post('/parse-input', aiParserRateLimit, aiParserCtrl.parseListingInput);
 router.get('/:id/titles', ctrl.getListingTitles);
 router.post('/:id/publish', ctrl.publishListing);
 router.get('/:id/publish-status', ctrl.getPublishStatus);
+router.post('/:id/sync', ctrl.syncStatus);
 router.get('/:id', ctrl.getListing);
 router.put('/:id', ctrl.updateListing);
 router.delete('/:id', ctrl.deleteListing);

@@ -74,3 +74,15 @@ export async function uploadImages(listingId: string, files: File[]): Promise<vo
 export async function deleteImage(listingId: string, imageId: string): Promise<void> {
   await apiClient.delete(`/listings/${listingId}/images/${imageId}`);
 }
+
+export interface PlatformSyncResult {
+  platform: string;
+  status: string;
+  synced: boolean;
+  error?: string;
+}
+
+export async function syncListingStatus(listingId: string): Promise<{ results: PlatformSyncResult[] }> {
+  const { data } = await apiClient.post<{ results: PlatformSyncResult[] }>(`/listings/${listingId}/sync`);
+  return data;
+}

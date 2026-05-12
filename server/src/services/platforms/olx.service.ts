@@ -1,8 +1,18 @@
-import { Platform } from '@prisma/client';
+import { Platform, PlatformStatus } from '@prisma/client';
 import { env } from '../../utils/env';
-import { createAdvert, buildAdvertPayload, getImagePresignedUrls } from '../olx-api.service';
-import { BasePlatformService, ListingWithRelations, PublishResult } from './base.platform.service';
-import { mockPublish } from './helpers';
+import { createAdvert, buildAdvertPayload, getImagePresignedUrls, getAdvert } from '../olx-api.service';
+import { BasePlatformService, ListingWithRelations, PublishResult, SyncStatusResult } from './base.platform.service';
+import { mockPublish, mockSync } from './helpers';
+
+function mapOlxStatus(status: string): PlatformStatus {
+  switch (status) {
+    case 'active':
+    case 'limited': return PlatformStatus.ACTIVE;
+    case 'removed':
+    case 'outdated': return PlatformStatus.ENDED;
+    default: return PlatformStatus.PENDING;
+  }
+}
 
 export class OlxService extends BasePlatformService {
   platform: Platform = 'OLX';
@@ -13,13 +23,15 @@ export class OlxService extends BasePlatformService {
     return mockPublish(this.platform, 'https://olx.pl/oferta');
   }
 
+  protected async _mockSync(externalId: string): Promise<SyncStatusResult> {
+    return mockSync(externalId);
+  }
+
   protected async _realPublish(listing: ListingWithRelations, categoryId: string): Promise<PublishResult> {
-    // 1. Generuj presigned URLs dla zdjęć (OLX przyjmuje URL-e bezpośrednio)
     const imageUrls = await getImagePresignedUrls(
       listing.images.slice(0, 8).map((img) => img.s3Key),
     );
 
-    // 2. Buduj i wyślij ogłoszenie
     const payload = buildAdvertPayload({
       title: listing.title,
       description: listing.description,
@@ -36,6 +48,14 @@ export class OlxService extends BasePlatformService {
       externalId: String(advert.id),
       externalUrl: advert.url ?? `https://www.olx.pl/oferta/${advert.id}`,
       status: 'ACTIVE',
+    };
+  }
+
+  protected async _realSync(externalId: string, userId: string): Promise<SyncStatusResult> {
+    const advert = await getAdvert(userId, externalId);
+    return {
+      status: mapOlxStatus(String(advert.status ?? '')),
+      externalUrl: String(advert.url ?? ''),
     };
   }
 }

@@ -1,10 +1,15 @@
-import { Platform, Prisma } from '@prisma/client';
+import { Platform, PlatformStatus, Prisma } from '@prisma/client';
 import * as categoryService from '../category.service';
 
 export interface PublishResult {
   externalId: string;
   externalUrl: string;
   status: 'ACTIVE';
+}
+
+export interface SyncStatusResult {
+  status: PlatformStatus;
+  externalUrl?: string;
 }
 
 export type ListingWithRelations = Prisma.ListingGetPayload<{
@@ -25,12 +30,19 @@ export abstract class BasePlatformService {
     return this._realPublish(listing, categoryId);
   }
 
+  async syncStatus(externalId: string, userId: string): Promise<SyncStatusResult> {
+    if (this.mockMode) return this._mockSync(externalId);
+    return this._realSync(externalId, userId);
+  }
+
   async endListing(_externalId: string): Promise<void> {
     return Promise.resolve();
   }
 
   protected abstract _mockPublish(listing: ListingWithRelations): Promise<PublishResult>;
   protected abstract _realPublish(listing: ListingWithRelations, categoryId: string): Promise<PublishResult>;
+  protected abstract _mockSync(externalId: string): Promise<SyncStatusResult>;
+  protected abstract _realSync(externalId: string, userId: string): Promise<SyncStatusResult>;
 
   buildPayload(listing: ListingWithRelations, categoryId: string, attributeSchema: object): object {
     return {

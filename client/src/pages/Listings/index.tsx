@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Search, Package, Copy, Pencil, Trash2 } from 'lucide-react';
-import { getListings, deleteListing, duplicateListing } from '@/api/listings.api';
+import { Plus, Search, Package, Copy, Pencil, Trash2, RefreshCw } from 'lucide-react';
+import { getListings, deleteListing, duplicateListing, syncListingStatus } from '@/api/listings.api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { StatusBadge } from '@/components/listings/StatusBadge';
@@ -62,6 +62,16 @@ export default function ListingsPage() {
       navigate(`/listings/${listing.id}/edit`);
     },
     onError: () => toast('Błąd podczas duplikowania', 'error'),
+  });
+
+  const syncMutation = useMutation({
+    mutationFn: (id: string) => syncListingStatus(id),
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ['listings'] });
+      const synced = data.results.filter((r) => r.synced).length;
+      toast(`Zsynchronizowano ${synced}/${data.results.length} platform`, 'success');
+    },
+    onError: () => toast('Błąd synchronizacji statusów', 'error'),
   });
 
   function handleDelete(listing: Listing) {
@@ -170,6 +180,16 @@ export default function ListingsPage() {
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex justify-end gap-1">
+                    {listing.status === 'ACTIVE' || listing.status === 'PARTIALLY_ACTIVE' ? (
+                      <button
+                        onClick={() => syncMutation.mutate(listing.id)}
+                        disabled={syncMutation.isPending && syncMutation.variables === listing.id}
+                        className="p-1.5 rounded hover:bg-blue-50 text-blue-500 disabled:opacity-50"
+                        title="Synchronizuj statusy"
+                      >
+                        <RefreshCw className={`h-4 w-4 ${syncMutation.isPending && syncMutation.variables === listing.id ? 'animate-spin' : ''}`} />
+                      </button>
+                    ) : null}
                     <button
                       onClick={() => navigate(`/listings/${listing.id}/edit`)}
                       className="p-1.5 rounded hover:bg-gray-100 text-gray-600"

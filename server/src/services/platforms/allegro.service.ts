@@ -1,9 +1,9 @@
-import { Platform } from '@prisma/client';
+import { Platform, PlatformStatus } from '@prisma/client';
 import { env } from '../../utils/env';
 import { getPresignedUrl } from '../image.service';
-import { uploadImageToAllegro, createAllegroOffer } from '../allegro-api.service';
-import { BasePlatformService, ListingWithRelations, PublishResult } from './base.platform.service';
-import { mockPublish } from './helpers';
+import { uploadImageToAllegro, createAllegroOffer, getAllegroOffer } from '../allegro-api.service';
+import { BasePlatformService, ListingWithRelations, PublishResult, SyncStatusResult } from './base.platform.service';
+import { mockPublish, mockSync } from './helpers';
 
 const ALLEGRO_WEB = env.ALLEGRO_SANDBOX
   ? 'https://allegro.pl.allegrosandbox.pl'
@@ -15,6 +15,15 @@ const CONDITION_MAP: Record<string, string> = {
   DAMAGED: 'used',
 };
 
+function mapAllegroStatus(status: string): PlatformStatus {
+  switch (status) {
+    case 'ACTIVE': return PlatformStatus.ACTIVE;
+    case 'ENDED': return PlatformStatus.ENDED;
+    case 'ACTIVATING': return PlatformStatus.PENDING;
+    default: return PlatformStatus.ENDED;
+  }
+}
+
 export class AllegroService extends BasePlatformService {
   platform: Platform = 'ALLEGRO';
   mockMode = env.ALLEGRO_MOCK;
@@ -24,8 +33,11 @@ export class AllegroService extends BasePlatformService {
     return mockPublish(this.platform, 'https://allegro.pl/oferta');
   }
 
+  protected async _mockSync(externalId: string): Promise<SyncStatusResult> {
+    return mockSync(externalId);
+  }
+
   protected async _realPublish(listing: ListingWithRelations, categoryId: string): Promise<PublishResult> {
-    // 1. Upload zdjęć do Allegro CDN (max 8)
     const imageIds: string[] = [];
     for (const img of listing.images.slice(0, 8)) {
       const url = await getPresignedUrl(img.s3Key);
@@ -33,7 +45,6 @@ export class AllegroService extends BasePlatformService {
       imageIds.push(id);
     }
 
-    // 2. Buduj payload oferty (POST /sale/offers — classic endpoint dla używanych części)
     const payload = {
       name: listing.title,
       category: { id: categoryId },
@@ -49,13 +60,20 @@ export class AllegroService extends BasePlatformService {
       stock: { available: listing.quantity, unit: 'UNIT' },
     };
 
-    // 3. Wyślij ofertę
     const offer = await createAllegroOffer(listing.userId, payload);
 
     return {
       externalId: offer.id,
       externalUrl: `${ALLEGRO_WEB}/oferta/${offer.id}`,
       status: 'ACTIVE',
+    };
+  }
+
+  protected async _realSync(externalId: string, userId: string): Promise<SyncStatusResult> {
+    const offer = await getAllegroOffer(userId, externalId);
+    return {
+      status: mapAllegroStatus(offer.publication?.status ?? ''),
+      externalUrl: `${ALLEGRO_WEB}/oferta/${externalId}`,
     };
   }
 }

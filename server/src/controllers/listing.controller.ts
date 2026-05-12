@@ -8,6 +8,7 @@ import * as titleGeneratorService from '../services/title-generator.service';
 import * as marginService from '../services/margin.service';
 import { getPlatformService } from '../services/platforms';
 import * as categoryService from '../services/category.service';
+import * as syncService from '../services/sync.service';
 import { prisma } from '../utils/prisma';
 
 const createSchema = z.object({
@@ -235,9 +236,25 @@ export async function getPublishStatus(req: Request, res: Response, next: NextFu
     await listingService.getListing(userId(req), req.params.id);
     const statuses = await prisma.platformListing.findMany({
       where: { listingId: req.params.id },
-      select: { platform: true, status: true },
+      select: { platform: true, status: true, externalUrl: true, lastSyncedAt: true, errorMessage: true },
     });
-    res.json(Object.fromEntries(statuses.map((item) => [item.platform, item.status])));
+    res.json(Object.fromEntries(statuses.map((item) => [item.platform, {
+      status: item.status,
+      externalUrl: item.externalUrl,
+      lastSyncedAt: item.lastSyncedAt,
+      errorMessage: item.errorMessage,
+    }])));
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function syncStatus(req: Request, res: Response, next: NextFunction) {
+  try {
+    const uid = userId(req);
+    await listingService.getListing(uid, req.params.id);
+    const results = await syncService.syncListingPlatforms(uid, req.params.id);
+    res.json({ results });
   } catch (err) {
     next(err);
   }

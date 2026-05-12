@@ -117,6 +117,18 @@ export async function uploadImageToAllegro(userId: string, imageUrl: string): Pr
   return response.data.imageId;
 }
 
+export async function getAllegroOffer(
+  userId: string,
+  offerId: string,
+): Promise<{ id: string; publication?: { status: string } }> {
+  const token = await getAllegroToken(userId);
+  const result = await requestWithRetry<{ id: string; publication?: { status: string } }>(
+    `${ALLEGRO_BASE_URL}/sale/offers/${encodeURIComponent(offerId)}`,
+    token,
+  );
+  return result.data;
+}
+
 export async function createAllegroOffer(
   userId: string,
   payload: Record<string, unknown>,

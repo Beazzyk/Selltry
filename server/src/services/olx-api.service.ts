@@ -65,6 +65,14 @@ export async function getCategoryAttributes(
   return olxRequest<OlxCategoryAttributesResponse>(token, 'GET', `/categories/${encodeURIComponent(categoryId)}/attributes`);
 }
 
+export async function getAdvert(
+  userId: string,
+  advertId: string,
+): Promise<{ status?: unknown; url?: unknown }> {
+  const token = await getValidAccessToken(userId);
+  return olxRequest<{ status?: unknown; url?: unknown }>(token, 'GET', `/adverts/${encodeURIComponent(advertId)}`);
+}
+
 export async function getAdverts(userId: string): Promise<OlxAdvertsResponse> {
   const token = await getValidAccessToken(userId);
   return olxRequest<OlxAdvertsResponse>(token, 'GET', '/adverts');
