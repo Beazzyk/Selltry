@@ -2,6 +2,7 @@ import { Platform, PlatformStatus } from '@prisma/client';
 import { env } from '../../utils/env';
 import { getPresignedUrl } from '../image.service';
 import { uploadImageToAllegro, createAllegroOffer, getAllegroOffer } from '../allegro-api.service';
+import { toAllegroHtml } from '../../utils/description-converter';
 import { BasePlatformService, ListingWithRelations, PublishResult, SyncStatusResult } from './base.platform.service';
 import { mockPublish, mockSync } from './helpers';
 
@@ -51,7 +52,7 @@ export class AllegroService extends BasePlatformService {
       parameters: [{ id: 'stan', values: [CONDITION_MAP[listing.condition] ?? 'used'] }],
       images: imageIds.map((imageId) => ({ imageId })),
       description: {
-        sections: [{ items: [{ type: 'TEXT', content: listing.description }] }],
+        sections: [{ items: [{ type: 'TEXT', content: toAllegroHtml(listing.description) }] }],
       },
       sellingMode: {
         format: 'BUY_NOW',

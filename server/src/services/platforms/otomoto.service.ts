@@ -1,6 +1,7 @@
 import { Platform, PlatformStatus } from '@prisma/client';
 import { env } from '../../utils/env';
 import { createImageCollection, createAdvert, buildAdvertPayload, getAccountAdvert } from '../otomoto-api.service';
+import { toPlainText } from '../../utils/description-converter';
 import { BasePlatformService, ListingWithRelations, PublishResult, SyncStatusResult } from './base.platform.service';
 import { mockPublish, mockSync } from './helpers';
 
@@ -36,7 +37,7 @@ export class OtomotoService extends BasePlatformService {
 
     const payload = buildAdvertPayload({
       title: listing.title,
-      description: listing.description,
+      description: toPlainText(listing.description),
       categoryId,
       condition: listing.condition,
       basePrice: Number(listing.basePrice),

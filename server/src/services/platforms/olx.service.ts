@@ -1,6 +1,7 @@
 import { Platform, PlatformStatus } from '@prisma/client';
 import { env } from '../../utils/env';
 import { createAdvert, buildAdvertPayload, getImagePresignedUrls, getAdvert } from '../olx-api.service';
+import { toPlainText } from '../../utils/description-converter';
 import { BasePlatformService, ListingWithRelations, PublishResult, SyncStatusResult } from './base.platform.service';
 import { mockPublish, mockSync } from './helpers';
 
@@ -34,7 +35,7 @@ export class OlxService extends BasePlatformService {
 
     const payload = buildAdvertPayload({
       title: listing.title,
-      description: listing.description,
+      description: toPlainText(listing.description),
       categoryId,
       condition: listing.condition,
       basePrice: Number(listing.basePrice),
