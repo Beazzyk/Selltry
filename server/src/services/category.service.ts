@@ -1,4 +1,12 @@
 import { CategoryType, Platform, VehicleType } from '@prisma/client';
+
+export async function getBrands(type: CategoryType) {
+  return prisma.brand.findMany({
+    where: { categoryTypes: { has: type } },
+    orderBy: { name: 'asc' },
+    select: { id: true, name: true },
+  });
+}
 import { AppError } from '../middleware/error.middleware';
 import { prisma } from '../utils/prisma';
 

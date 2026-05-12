@@ -24,6 +24,20 @@ export async function getCategoryTypes(req: Request, res: Response, next: NextFu
   }
 }
 
+export async function getBrands(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { type } = req.query;
+    if (!type || !Object.values(CategoryType).includes(type as CategoryType)) {
+      res.status(400).json({ error: 'Valid ?type= required' });
+      return;
+    }
+    const brands = await categoryService.getBrands(type as CategoryType);
+    res.json(brands);
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function getVehicleMakes(req: Request, res: Response, next: NextFunction) {
   try {
     const { type } = req.query;

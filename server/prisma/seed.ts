@@ -6,6 +6,7 @@ async function main() {
   console.log('Seeding database...');
 
   await seedVehicleMakes();
+  await seedBrands();
   await seedInternalCategories();
   await seedMockCategoryMappings();
 
@@ -99,6 +100,121 @@ async function seedVehicleMakes() {
   }
 
   console.log('Vehicle makes & models seeded.');
+}
+
+async function seedBrands() {
+  const E = CategoryType.ELECTRONICS;
+  const H = CategoryType.HOME_GARDEN;
+  const F = CategoryType.FASHION;
+  const S = CategoryType.SPORT;
+  const T = CategoryType.TOOLS;
+  const O = CategoryType.OTHER;
+
+  const brands: { name: string; types: CategoryType[] }[] = [
+    // Electronics
+    { name: 'Apple',          types: [E] },
+    { name: 'Samsung',        types: [E, H] },
+    { name: 'Sony',           types: [E, S] },
+    { name: 'LG',             types: [E, H] },
+    { name: 'Philips',        types: [E, H] },
+    { name: 'Panasonic',      types: [E, H] },
+    { name: 'Lenovo',         types: [E] },
+    { name: 'HP',             types: [E] },
+    { name: 'Dell',           types: [E] },
+    { name: 'ASUS',           types: [E] },
+    { name: 'Acer',           types: [E] },
+    { name: 'MSI',            types: [E] },
+    { name: 'Xiaomi',         types: [E, H] },
+    { name: 'Huawei',         types: [E] },
+    { name: 'OnePlus',        types: [E] },
+    { name: 'Google',         types: [E] },
+    { name: 'Microsoft',      types: [E] },
+    { name: 'Bose',           types: [E, S] },
+    { name: 'JBL',            types: [E, S] },
+    { name: 'Sennheiser',     types: [E] },
+    { name: 'Canon',          types: [E] },
+    { name: 'Nikon',          types: [E] },
+    { name: 'Fujifilm',       types: [E] },
+    { name: 'GoPro',          types: [E, S] },
+    { name: 'Nintendo',       types: [E] },
+    // Home & Garden
+    { name: 'IKEA',           types: [H] },
+    { name: 'Bosch',          types: [H, T] },
+    { name: 'Siemens',        types: [H] },
+    { name: 'Electrolux',     types: [H] },
+    { name: 'Miele',          types: [H] },
+    { name: 'Whirlpool',      types: [H] },
+    { name: 'Tefal',          types: [H] },
+    { name: 'Rowenta',        types: [H] },
+    { name: 'Dyson',          types: [H] },
+    { name: 'Kärcher',        types: [H, T] },
+    { name: 'Gardena',        types: [H] },
+    { name: 'Fiskars',        types: [H, T] },
+    { name: 'Husqvarna',      types: [H, T] },
+    { name: 'Braun',          types: [H] },
+    // Fashion
+    { name: 'Nike',           types: [F, S] },
+    { name: 'Adidas',         types: [F, S] },
+    { name: 'Puma',           types: [F, S] },
+    { name: 'Reebok',         types: [F, S] },
+    { name: 'New Balance',    types: [F, S] },
+    { name: 'Under Armour',   types: [F, S] },
+    { name: 'Zara',           types: [F] },
+    { name: "H&M",            types: [F] },
+    { name: 'Reserved',       types: [F] },
+    { name: "Levi's",         types: [F] },
+    { name: 'Tommy Hilfiger', types: [F] },
+    { name: 'Calvin Klein',   types: [F] },
+    { name: 'Lacoste',        types: [F, S] },
+    { name: 'Ralph Lauren',   types: [F] },
+    { name: 'Hugo Boss',      types: [F] },
+    { name: 'Vans',           types: [F, S] },
+    { name: 'Converse',       types: [F, S] },
+    // Sport
+    { name: 'Salomon',        types: [S] },
+    { name: 'The North Face', types: [S, F] },
+    { name: 'Columbia',       types: [S, F] },
+    { name: 'Scott',          types: [S] },
+    { name: 'Trek',           types: [S] },
+    { name: 'Specialized',    types: [S] },
+    { name: 'Shimano',        types: [S] },
+    { name: 'Garmin',         types: [S, E] },
+    { name: 'Polar',          types: [S] },
+    { name: 'Head',           types: [S] },
+    { name: 'Wilson',         types: [S] },
+    { name: 'Rossignol',      types: [S] },
+    // Tools
+    { name: 'Makita',         types: [T] },
+    { name: 'DeWalt',         types: [T] },
+    { name: 'Milwaukee',      types: [T] },
+    { name: 'Metabo',         types: [T] },
+    { name: 'Hilti',          types: [T] },
+    { name: 'Stanley',        types: [T, H] },
+    { name: 'Bahco',          types: [T] },
+    { name: 'Knipex',         types: [T] },
+    { name: 'Wera',           types: [T] },
+    { name: 'Festool',        types: [T] },
+    { name: 'Black+Decker',   types: [T, H] },
+    { name: 'Ryobi',          types: [T] },
+    // Other
+    { name: 'LEGO',           types: [O] },
+    { name: 'Mattel',         types: [O] },
+    { name: 'Hasbro',         types: [O] },
+    { name: 'Playmobil',      types: [O] },
+    { name: "L'Oréal",        types: [O] },
+    { name: 'Nivea',          types: [O] },
+    { name: 'Oral-B',         types: [O, H] },
+  ];
+
+  for (const brand of brands) {
+    await prisma.brand.upsert({
+      where: { name: brand.name },
+      update: { categoryTypes: { set: brand.types } },
+      create: { name: brand.name, categoryTypes: brand.types },
+    });
+  }
+
+  console.log(`Brands seeded: ${brands.length}`);
 }
 
 async function upsertMakeWithType(name: string, type: VehicleType) {

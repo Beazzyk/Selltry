@@ -1,6 +1,7 @@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { CategoryType } from '@/types';
+import { BrandSelect } from '@/components/shared/BrandSelect';
 import { WizardData } from './types';
 
 const CONDITION_OPTIONS = [
@@ -35,10 +36,16 @@ export function Step2FieldsGeneric({ data, onChange }: Props) {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
-        {fields.brand && (
+        {fields.brand && type && (
           <div>
             <Label>Marka</Label>
-            <Input className="mt-1" placeholder="np. Samsung, Adidas..." value={attrs.brand ?? ''} onChange={(e) => patchAttr(data, onChange, 'brand', e.target.value)} />
+            <div className="mt-1">
+              <BrandSelect
+                categoryType={type}
+                value={String(attrs.brand ?? '')}
+                onChange={(v) => patchAttr(data, onChange, 'brand', v)}
+              />
+            </div>
           </div>
         )}
         {fields.productModel && (

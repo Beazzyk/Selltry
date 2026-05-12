@@ -6,6 +6,16 @@ export interface CategoryTypeInfo {
   count: number;
 }
 
+export interface Brand {
+  id: string;
+  name: string;
+}
+
+export async function getBrands(type: CategoryType): Promise<Brand[]> {
+  const { data } = await apiClient.get<Brand[]>('/brands', { params: { type } });
+  return data;
+}
+
 export async function getCategoryTypes(): Promise<CategoryTypeInfo[]> {
   const { data } = await apiClient.get<CategoryTypeInfo[]>('/category-types');
   return data;
