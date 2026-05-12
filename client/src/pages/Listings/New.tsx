@@ -11,7 +11,6 @@ import { Step2Details } from './wizard/Step2Details';
 import { Step3Images } from './wizard/Step3Images';
 import { Step4Submit } from './wizard/Step4Submit';
 import { WizardData, WIZARD_DEFAULTS } from './wizard/types';
-import { AIParser } from '@/components/shared/AIParser';
 
 const STEPS = [
   { label: 'Pojazd', desc: 'Identyfikacja i dane pojazdu' },
@@ -88,12 +87,6 @@ export default function NewListingPage() {
         <h1 className="text-2xl font-bold text-gray-900">Nowe ogłoszenie</h1>
         <p className="text-sm text-gray-500 mt-1">Wypełnij dane w 4 krokach</p>
       </div>
-
-      <AIParser
-        onParsed={(parsed) => {
-          patch(parsed);
-        }}
-      />
 
       {/* Pasek kroków */}
       <div className="flex items-center gap-0">
