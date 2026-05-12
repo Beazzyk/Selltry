@@ -83,6 +83,25 @@ export interface PlatformSyncResult {
   error?: string;
 }
 
+export interface GenerateDescriptionInput {
+  categoryType: string;
+  categoryName?: string;
+  brand?: string;
+  productModel?: string;
+  condition: string;
+  title: string;
+  partSide?: string;
+  vehicleMake?: string;
+  vehicleModel?: string;
+  vehicleYear?: number;
+  attributes?: Record<string, unknown>;
+}
+
+export async function generateDescription(input: GenerateDescriptionInput): Promise<{ description: string }> {
+  const { data } = await apiClient.post<{ description: string }>('/listings/generate-description', input);
+  return data;
+}
+
 export async function syncListingStatus(listingId: string): Promise<{ results: PlatformSyncResult[] }> {
   const { data } = await apiClient.post<{ results: PlatformSyncResult[] }>(`/listings/${listingId}/sync`);
   return data;

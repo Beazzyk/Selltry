@@ -1,7 +1,10 @@
+import { Loader2, Sparkles } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 import { CategoryType } from '@/types';
 import { BrandSelect } from '@/components/shared/BrandSelect';
+import { useDescriptionGenerator } from '@/hooks/useDescriptionGenerator';
 import { WizardData } from './types';
 
 const CONDITION_OPTIONS = [
@@ -29,6 +32,7 @@ function patchAttr(data: WizardData, onChange: Props['onChange'], key: string, v
 }
 
 export function Step2FieldsGeneric({ data, onChange }: Props) {
+  const { generate, loading: aiLoading, error: aiError } = useDescriptionGenerator();
   const type = data.categoryType as Exclude<CategoryType, 'AUTOMOTIVE'> | undefined;
   const fields = type ? TYPE_FIELDS[type] ?? {} : {};
   const attrs = data.attributes;
@@ -110,8 +114,33 @@ export function Step2FieldsGeneric({ data, onChange }: Props) {
       </div>
 
       <div>
-        <Label>Opis *</Label>
-        <textarea className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm min-h-[100px]" placeholder="Szczegółowy opis produktu..." value={data.description ?? ''} onChange={(e) => onChange({ description: e.target.value })} />
+        <div className="flex items-center justify-between mb-1">
+          <Label>Opis *</Label>
+          <Button type="button" size="sm" variant="outline"
+            onClick={() => void generate(data, onChange)}
+            disabled={aiLoading || !data.title || !data.condition}
+            className="gap-1.5 text-primary-600 border-primary-200 hover:bg-primary-50"
+          >
+            {aiLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+            {aiLoading ? 'Generuję...' : 'Generuj z AI'}
+          </Button>
+        </div>
+        {aiError && <p className="text-xs text-red-500 mb-1">{aiError}</p>}
+        {data.description && data.description.startsWith('<') ? (
+          <div className="mt-1 rounded-md border border-gray-200 p-3 bg-gray-50 text-xs text-gray-500 max-h-40 overflow-y-auto">
+            <div dangerouslySetInnerHTML={{ __html: data.description }} />
+          </div>
+        ) : (
+          <textarea className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm min-h-[100px]"
+            placeholder="Szczegółowy opis produktu lub wygeneruj AI..."
+            value={data.description ?? ''} onChange={(e) => onChange({ description: e.target.value })} />
+        )}
+        {data.description?.startsWith('<') && (
+          <button type="button" className="text-xs text-primary-600 hover:underline mt-1"
+            onClick={() => onChange({ description: '' })}>
+            Wyczyść i wpisz ręcznie
+          </button>
+        )}
       </div>
     </div>
   );

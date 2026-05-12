@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Eye } from 'lucide-react';
 import { ChevronLeft, ChevronRight, Check, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast';
@@ -13,6 +14,7 @@ import { Step2FieldsGeneric } from './wizard/Step2FieldsGeneric';
 import { Step3Images } from './wizard/Step3Images';
 import { Step4Submit } from './wizard/Step4Submit';
 import { WizardData, WIZARD_DEFAULTS } from './wizard/types';
+import { ListingPreview } from '@/components/listings/ListingPreview';
 
 const STEPS_AUTO = [
   { label: 'Kategoria', desc: 'Wybierz kategorię' },
@@ -35,6 +37,7 @@ export default function NewListingPage() {
   const [step, setStep] = useState(0);
   const [data, setData] = useState<WizardData>(WIZARD_DEFAULTS);
   const [submitting, setSubmitting] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
 
   const isAuto = data.categoryType === 'AUTOMOTIVE';
   const STEPS = isAuto ? STEPS_AUTO : STEPS_GENERIC;
@@ -132,6 +135,8 @@ export default function NewListingPage() {
         {step === STEPS.length - 1 && <Step4Submit data={data} onChange={patch} />}
       </div>
 
+      {showPreview && <ListingPreview data={data} onClose={() => setShowPreview(false)} />}
+
       <div className="flex justify-between">
         <Button variant="outline" onClick={() => (step === 0 ? navigate('/listings') : setStep(step - 1))}>
           <ChevronLeft className="h-4 w-4 mr-1" />
@@ -139,14 +144,26 @@ export default function NewListingPage() {
         </Button>
 
         {step < STEPS.length - 1 ? (
-          <Button onClick={() => setStep(step + 1)} disabled={!canProceed()}>
-            Dalej <ChevronRight className="h-4 w-4 ml-1" />
-          </Button>
+          <div className="flex gap-2">
+            {step >= 2 && (
+              <Button variant="outline" onClick={() => setShowPreview(true)}>
+                <Eye className="h-4 w-4 mr-1" /> Podgląd
+              </Button>
+            )}
+            <Button onClick={() => setStep(step + 1)} disabled={!canProceed()}>
+              Dalej <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
         ) : (
-          <Button onClick={handleSubmit} disabled={!canProceed() || submitting}>
-            {submitting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Check className="h-4 w-4 mr-2" />}
-            {submitting ? 'Zapisywanie...' : 'Zapisz ogłoszenie'}
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setShowPreview(true)}>
+              <Eye className="h-4 w-4 mr-1" /> Podgląd
+            </Button>
+            <Button onClick={handleSubmit} disabled={!canProceed() || submitting}>
+              {submitting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Check className="h-4 w-4 mr-2" />}
+              {submitting ? 'Zapisywanie...' : 'Zapisz ogłoszenie'}
+            </Button>
+          </div>
         )}
       </div>
     </div>

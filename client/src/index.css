@@ -7,3 +7,23 @@
     @apply bg-gray-50 text-gray-900 antialiased;
   }
 }
+
+/* AI-generated listing description template */
+.listing-preview h3 {
+  @apply text-base font-bold text-gray-900 mt-4 mb-2;
+}
+.listing-preview ul {
+  @apply list-disc pl-5 space-y-1 text-sm text-gray-700;
+}
+.listing-preview table {
+  @apply w-full border-collapse text-sm;
+}
+.listing-preview table th {
+  @apply bg-gray-100 text-left px-3 py-2 font-semibold text-gray-700 border border-gray-200;
+}
+.listing-preview table td {
+  @apply px-3 py-2 text-gray-700 border border-gray-200;
+}
+.listing-preview p {
+  @apply text-sm text-gray-700 leading-relaxed;
+}
