@@ -1,18 +1,16 @@
 import { NextFunction, Request, Response } from 'express';
 import { Platform } from '@prisma/client';
 import { z } from 'zod';
-import { AuthRequest } from '../middleware/auth.middleware';
 import { prisma } from '../utils/prisma';
 import * as allegroApiService from '../services/allegro-api.service';
 import { encrypt } from '../utils/crypto';
 import * as allegroOAuthService from '../services/allegro-oauth.service';
 import * as otomotoOAuthService from '../services/otomoto-oauth.service';
 import * as olxOAuthService from '../services/olx-oauth.service';
+import * as ebayApiService from '../services/ebay-api.service';
 import { env } from '../utils/env';
-
-function userId(req: Request): string {
-  return (req as AuthRequest).userId;
-}
+import { oauthHtml } from '../utils/oauth-html';
+import { getUserId } from '../utils/request-helpers';
 
 const saveMappingsSchema = z.object({
   items: z.array(
@@ -28,7 +26,7 @@ const saveMappingsSchema = z.object({
 export async function getPlatforms(req: Request, res: Response, next: NextFunction) {
   try {
     const platforms = await prisma.userPlatform.findMany({
-      where: { userId: userId(req) },
+      where: { userId: getUserId(req) },
       orderBy: { platform: 'asc' },
     });
     res.json(platforms);
@@ -46,14 +44,32 @@ export async function connectPlatform(req: Request, res: Response, next: NextFun
       });
       return;
     }
+    if (platform === Platform.OLX && !env.OLX_MOCK) {
+      res.status(400).json({
+        error: 'Use OLX OAuth flow. Call /api/platforms/olx/oauth/start and open authorizationUrl.',
+      });
+      return;
+    }
+    if (platform === Platform.EBAY && !env.EBAY_MOCK) {
+      res.status(400).json({
+        error: 'Use eBay OAuth flow. Call /api/platforms/ebay/oauth/start and open authorizationUrl.',
+      });
+      return;
+    }
+    if (platform === Platform.OTOMOTO && !env.OTOMOTO_MOCK) {
+      res.status(400).json({
+        error: 'Use Otomoto connect flow. Call /api/platforms/otomoto/connect with username/password.',
+      });
+      return;
+    }
 
     const accessToken =
       typeof req.body?.accessToken === 'string' && req.body.accessToken.trim()
         ? encrypt(req.body.accessToken.trim())
         : undefined;
     const connected = await prisma.userPlatform.upsert({
-      where: { userId_platform: { userId: userId(req), platform } },
-      create: { userId: userId(req), platform, isActive: true, connectedAt: new Date(), accessToken },
+      where: { userId_platform: { userId: getUserId(req), platform } },
+      create: { userId: getUserId(req), platform, isActive: true, connectedAt: new Date(), accessToken },
       update: { isActive: true, connectedAt: new Date(), ...(accessToken && { accessToken }) },
     });
     res.status(201).json(connected);
@@ -66,7 +82,7 @@ export async function disconnectPlatform(req: Request, res: Response, next: Next
   try {
     const platform = req.params.platform as Platform;
     await prisma.userPlatform.update({
-      where: { userId_platform: { userId: userId(req), platform } },
+      where: { userId_platform: { userId: getUserId(req), platform } },
       data: { isActive: false },
     });
     res.status(204).send();
@@ -78,7 +94,7 @@ export async function disconnectPlatform(req: Request, res: Response, next: Next
 export async function getAllegroCategories(req: Request, res: Response, next: NextFunction) {
   try {
     const parentId = typeof req.query.parentId === 'string' ? req.query.parentId : undefined;
-    const result = await allegroApiService.getAllegroCategories(userId(req), parentId);
+    const result = await allegroApiService.getAllegroCategories(getUserId(req), parentId);
     res.json(result);
   } catch (error) {
     next(error);
@@ -88,7 +104,7 @@ export async function getAllegroCategories(req: Request, res: Response, next: Ne
 export async function saveAllegroMappings(req: Request, res: Response, next: NextFunction) {
   try {
     const payload = saveMappingsSchema.parse(req.body);
-    const result = await allegroApiService.saveAllegroMappings(userId(req), payload.items);
+    const result = await allegroApiService.saveAllegroMappings(getUserId(req), payload.items);
     res.json(result);
   } catch (error) {
     next(error);
@@ -97,7 +113,7 @@ export async function saveAllegroMappings(req: Request, res: Response, next: Nex
 
 export async function getAllegroOAuthStart(req: Request, res: Response, next: NextFunction) {
   try {
-    const authorizationUrl = allegroOAuthService.buildAuthorizationUrl(userId(req));
+    const authorizationUrl = allegroOAuthService.buildAuthorizationUrl(getUserId(req));
     res.json({ authorizationUrl });
   } catch (error) {
     next(error);
@@ -116,17 +132,17 @@ export async function connectOtomoto(req: Request, res: Response, next: NextFunc
     if (env.OTOMOTO_MOCK) {
       // MOCK MODE — od razu aktywuje bez prawdziwego API
       const connected = await prisma.userPlatform.upsert({
-        where: { userId_platform: { userId: userId(req), platform: 'OTOMOTO' } },
-        create: { userId: userId(req), platform: 'OTOMOTO', isActive: true, connectedAt: new Date() },
+        where: { userId_platform: { userId: getUserId(req), platform: 'OTOMOTO' } },
+        create: { userId: getUserId(req), platform: 'OTOMOTO', isActive: true, connectedAt: new Date() },
         update: { isActive: true, connectedAt: new Date() },
       });
       res.status(201).json(connected);
       return;
     }
     const { username, password } = otomotoConnectSchema.parse(req.body);
-    await otomotoOAuthService.connectWithCredentials(userId(req), username, password);
+    await otomotoOAuthService.connectWithCredentials(getUserId(req), username, password);
     const record = await prisma.userPlatform.findUnique({
-      where: { userId_platform: { userId: userId(req), platform: 'OTOMOTO' } },
+      where: { userId_platform: { userId: getUserId(req), platform: 'OTOMOTO' } },
     });
     res.status(201).json(record);
   } catch (error) {
@@ -141,14 +157,14 @@ export async function getOlxOAuthStart(req: Request, res: Response, next: NextFu
     if (env.OLX_MOCK) {
       // MOCK MODE — od razu aktywuje
       const connected = await prisma.userPlatform.upsert({
-        where: { userId_platform: { userId: userId(req), platform: 'OLX' } },
-        create: { userId: userId(req), platform: 'OLX', isActive: true, connectedAt: new Date() },
+        where: { userId_platform: { userId: getUserId(req), platform: 'OLX' } },
+        create: { userId: getUserId(req), platform: 'OLX', isActive: true, connectedAt: new Date() },
         update: { isActive: true, connectedAt: new Date() },
       });
       res.status(201).json(connected);
       return;
     }
-    const authorizationUrl = olxOAuthService.buildAuthorizationUrl(userId(req));
+    const authorizationUrl = olxOAuthService.buildAuthorizationUrl(getUserId(req));
     res.json({ authorizationUrl });
   } catch (error) {
     next(error);
@@ -191,15 +207,23 @@ export async function testPlatformConnection(req: Request, res: Response, next: 
   try {
     const platform = req.params.platform.toUpperCase() as Platform;
     const record = await prisma.userPlatform.findUnique({
-      where: { userId_platform: { userId: userId(req), platform } },
+      where: { userId_platform: { userId: getUserId(req), platform } },
     });
     if (!record?.isActive) {
       res.status(400).json({ error: 'Platforma niepodlaczona' });
       return;
     }
     if (platform === Platform.ALLEGRO && !env.ALLEGRO_MOCK) {
-      const me = await allegroApiService.getAllegroMe(userId(req));
+      const me = await allegroApiService.getAllegroMe(getUserId(req));
       res.json({ ok: true, message: `Allegro: zalogowany jako ${me.login}` });
+      return;
+    }
+    if (platform === Platform.EBAY && !env.EBAY_MOCK) {
+      const offers = await ebayApiService.getOffers(getUserId(req), 1);
+      const count = Array.isArray((offers as { offers?: unknown[] }).offers)
+        ? (offers as { offers?: unknown[] }).offers!.length
+        : 0;
+      res.json({ ok: true, message: `eBay: polaczenie aktywne (offers: ${count})` });
       return;
     }
     res.json({ ok: true, message: `${platform}: polaczenie aktywne (MOCK)` });
@@ -208,17 +232,3 @@ export async function testPlatformConnection(req: Request, res: Response, next: 
   }
 }
 
-function oauthHtml(status: 'success' | 'error', platform: string, message?: string): string {
-  const msg = status === 'success' ? 'Polaczono! Zamykanie...' : `Blad: ${message ?? 'Sprobuj ponownie.'}`;
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>OAuth</title></head><body>
-<p style="font-family:sans-serif;padding:40px;text-align:center">${msg}</p>
-<script>
-if(window.opener){
-  window.opener.postMessage({type:'OAUTH_CONNECTED',platform:'${platform}',status:'${status}'},'*');
-  window.close();
-}else{
-  setTimeout(function(){window.location.href='${env.CLIENT_URL}/platforms';},1500);
-}
-</script>
-</body></html>`;
-}

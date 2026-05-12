@@ -1,33 +1,41 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2, XCircle, Plug, Unplug, FlaskConical, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   connectPlatform,
+  connectOtomoto,
   disconnectPlatform,
   getAllegroOAuthStart,
+  getEbayOAuthStart,
   getOlxOAuthStart,
   getPlatforms,
   testPlatform,
 } from '@/api/platforms.api';
 import { Platform } from '@/types';
 import { useToast } from '@/components/ui/toast';
+import { OtomotoConnectModal } from '@/components/platforms/OtomotoConnectModal';
+import { OAuthConnectModal } from '@/components/platforms/OAuthConnectModal';
+import { PlatformDiagnosticsPanel } from '@/components/platforms/PlatformDiagnosticsPanel';
+import { usePlatformDiagnostics } from '@/hooks/usePlatformDiagnostics';
+import { getRequestErrorMessage } from '@/lib/errors';
 
-const PLATFORM_META: Record<Platform, { label: string; bg: string; initials: string; oauth: boolean }> = {
-  ALLEGRO: { label: 'Allegro', bg: 'bg-orange-500', initials: 'AL', oauth: true },
-  OVOKO: { label: 'Ovoko', bg: 'bg-emerald-600', initials: 'OV', oauth: false },
-  OTOMOTO: { label: 'Otomoto', bg: 'bg-blue-600', initials: 'OT', oauth: false },
-  OLX: { label: 'OLX', bg: 'bg-lime-500', initials: 'OLX', oauth: true },
-  EBAY: { label: 'eBay', bg: 'bg-yellow-400', initials: 'eB', oauth: false },
+const PLATFORM_META: Record<Platform, { label: string; bg: string; initials: string }> = {
+  ALLEGRO: { label: 'Allegro', bg: 'bg-orange-500', initials: 'AL' },
+  OVOKO: { label: 'Ovoko', bg: 'bg-emerald-600', initials: 'OV' },
+  OTOMOTO: { label: 'Otomoto', bg: 'bg-blue-600', initials: 'OT' },
+  OLX: { label: 'OLX', bg: 'bg-lime-500', initials: 'OLX' },
+  EBAY: { label: 'eBay', bg: 'bg-yellow-400', initials: 'eB' },
 };
 
 const PLATFORMS: Platform[] = ['ALLEGRO', 'OVOKO', 'OTOMOTO', 'OLX', 'EBAY'];
+const OAUTH_PLATFORMS: Platform[] = ['ALLEGRO', 'OLX', 'EBAY'];
 
 function openOAuthPopup(): Window | null {
   const w = 600, h = 700;
   const left = Math.round(window.screenX + (window.outerWidth - w) / 2);
   const top = Math.round(window.screenY + (window.outerHeight - h) / 2);
-  // Otwieramy okno synchronicznie (przed await) żeby przeglądarka traktowała to jako user gesture
+  // Otwieramy synchronicznie przed await — przeglądarka traktuje to jako user gesture
   return window.open('about:blank', 'oauth_popup', `width=${w},height=${h},left=${left},top=${top},resizable=yes,scrollbars=yes`);
 }
 
@@ -35,6 +43,10 @@ export default function PlatformsPage() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { data = [] } = useQuery({ queryKey: ['platforms'], queryFn: getPlatforms });
+  const diagnostics = usePlatformDiagnostics();
+  const [isOtomotoModalOpen, setIsOtomotoModalOpen] = useState(false);
+  const [oauthPlatform, setOauthPlatform] = useState<Platform | null>(null);
+  const [isOAuthConnecting, setIsOAuthConnecting] = useState(false);
 
   useEffect(() => {
     function handleMessage(e: MessageEvent) {
@@ -66,26 +78,24 @@ export default function PlatformsPage() {
     onSuccess: (r) => toast(r.message, 'success'),
     onError: () => toast('Test połączenia nie powiódł się', 'error'),
   });
+  const otomotoConnectMut = useMutation({
+    mutationFn: (creds: { username: string; password: string }) => connectOtomoto(creds.username, creds.password),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['platforms'] });
+      setIsOtomotoModalOpen(false);
+      toast('Otomoto połączona pomyślnie!', 'success');
+    },
+    onError: (error) => toast(getRequestErrorMessage(error, 'Nie udało się połączyć Otomoto'), 'error'),
+  });
 
-  async function handleConnect(platform: Platform) {
-    if (platform === 'ALLEGRO') {
-      const popup = openOAuthPopup(); // synchronicznie — przed await
-      try {
+  async function startOAuthConnect(platform: Platform) {
+    const popup = openOAuthPopup();
+    try {
+      if (platform === 'ALLEGRO') {
         const { authorizationUrl } = await getAllegroOAuthStart();
-        if (popup) {
-          popup.location.href = authorizationUrl;
-        } else {
-          window.location.href = authorizationUrl;
-        }
-      } catch {
-        popup?.close();
-        toast('Nie udało się uruchomić OAuth Allegro', 'error');
-      }
-      return;
-    }
-    if (platform === 'OLX') {
-      const popup = openOAuthPopup();
-      try {
+        if (popup) popup.location.href = authorizationUrl;
+        else window.location.href = authorizationUrl;
+      } else if (platform === 'OLX') {
         const result = await getOlxOAuthStart();
         if (result?.authorizationUrl) {
           if (popup) popup.location.href = result.authorizationUrl;
@@ -95,10 +105,24 @@ export default function PlatformsPage() {
           queryClient.invalidateQueries({ queryKey: ['platforms'] });
           toast('OLX połączona (MOCK)', 'success');
         }
-      } catch {
-        popup?.close();
-        toast('Nie udało się uruchomić OAuth OLX', 'error');
+      } else if (platform === 'EBAY') {
+        const { authorizationUrl } = await getEbayOAuthStart();
+        if (popup) popup.location.href = authorizationUrl;
+        else window.location.href = authorizationUrl;
       }
+    } catch (error) {
+      popup?.close();
+      toast(getRequestErrorMessage(error, `Nie udało się uruchomić OAuth ${platform}`), 'error');
+    }
+  }
+
+  function handleConnect(platform: Platform) {
+    if (OAUTH_PLATFORMS.includes(platform)) {
+      setOauthPlatform(platform);
+      return;
+    }
+    if (platform === 'OTOMOTO') {
+      setIsOtomotoModalOpen(true);
       return;
     }
     connectMut.mutate(platform);
@@ -114,19 +138,14 @@ export default function PlatformsPage() {
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
         {PLATFORMS.map((platform) => {
           const meta = PLATFORM_META[platform];
-          const current = data.find((item) => item.platform === platform);
-          const active = !!current?.isActive;
+          const active = !!data.find((item) => item.platform === platform)?.isActive;
           const isTesting = testMut.isPending && testMut.variables === platform;
 
           return (
-            <div
-              key={platform}
-              className="flex flex-col items-center rounded-2xl border border-gray-200 bg-white p-5 shadow-sm gap-4 transition-shadow hover:shadow-md"
-            >
+            <div key={platform} className="flex flex-col items-center rounded-2xl border border-gray-200 bg-white p-5 shadow-sm gap-4 transition-shadow hover:shadow-md">
               <div className={`flex h-16 w-16 items-center justify-center rounded-2xl ${meta.bg} text-white font-bold text-lg select-none`}>
                 {meta.initials}
               </div>
-
               <div className="text-center">
                 <p className="font-semibold text-gray-900">{meta.label}</p>
                 <span className={`inline-flex items-center gap-1 text-xs font-medium mt-1 ${active ? 'text-green-600' : 'text-gray-400'}`}>
@@ -134,38 +153,21 @@ export default function PlatformsPage() {
                   {active ? 'Połączona' : 'Niepołączona'}
                 </span>
               </div>
-
               <div className="flex flex-col gap-2 w-full mt-auto">
                 {active ? (
                   <>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="w-full text-xs"
-                      onClick={() => testMut.mutate(platform)}
-                      disabled={isTesting}
-                    >
+                    <Button size="sm" variant="outline" className="w-full text-xs" onClick={() => testMut.mutate(platform)} disabled={isTesting}>
                       {isTesting ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <FlaskConical className="h-3 w-3 mr-1" />}
                       {isTesting ? 'Testuje...' : 'Test'}
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="w-full text-xs text-red-500 hover:text-red-600 hover:bg-red-50"
-                      onClick={() => disconnectMut.mutate(platform)}
-                      disabled={disconnectMut.isPending}
-                    >
+                    <Button size="sm" variant="ghost" className="w-full text-xs text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => disconnectMut.mutate(platform)} disabled={disconnectMut.isPending}>
                       <Unplug className="h-3 w-3 mr-1" />
                       Rozłącz
                     </Button>
+                    <PlatformDiagnosticsPanel platform={platform} diagnostics={diagnostics} />
                   </>
                 ) : (
-                  <Button
-                    size="sm"
-                    className="w-full text-xs"
-                    onClick={() => void handleConnect(platform)}
-                    disabled={connectMut.isPending}
-                  >
+                  <Button size="sm" className="w-full text-xs" onClick={() => handleConnect(platform)} disabled={connectMut.isPending}>
                     <Plug className="h-3 w-3 mr-1" />
                     Połącz
                   </Button>
@@ -179,6 +181,30 @@ export default function PlatformsPage() {
       <p className="text-xs text-gray-400">
         Tokeny dostępowe są szyfrowane AES-256 i przechowywane wyłącznie po stronie serwera.
       </p>
+      <OtomotoConnectModal
+        open={isOtomotoModalOpen}
+        isSubmitting={otomotoConnectMut.isPending}
+        onClose={() => setIsOtomotoModalOpen(false)}
+        onSubmit={async (username, password) => {
+          await otomotoConnectMut.mutateAsync({ username, password });
+        }}
+      />
+      <OAuthConnectModal
+        open={!!oauthPlatform}
+        platform={oauthPlatform}
+        isSubmitting={isOAuthConnecting}
+        onClose={() => { if (!isOAuthConnecting) setOauthPlatform(null); }}
+        onContinue={async () => {
+          if (!oauthPlatform) return;
+          setIsOAuthConnecting(true);
+          try {
+            await startOAuthConnect(oauthPlatform);
+          } finally {
+            setIsOAuthConnecting(false);
+            setOauthPlatform(null);
+          }
+        }}
+      />
     </div>
   );
 }

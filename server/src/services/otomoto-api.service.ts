@@ -21,6 +21,17 @@ interface OtomotoAdvert {
   status?: string;
 }
 
+interface OtomotoCategoryResponse {
+  id?: string | number;
+  name?: string;
+  [key: string]: unknown;
+}
+
+interface OtomotoAdvertsResponse {
+  data?: unknown[];
+  [key: string]: unknown;
+}
+
 interface ImageCollection {
   id: string;
 }
@@ -49,6 +60,16 @@ export async function createAdvert(
 export async function deleteAdvert(userId: string, advertId: string): Promise<void> {
   const token = await getValidAccessToken(userId);
   await otomotoRequest(token, 'DELETE', `/account/adverts/${advertId}`, undefined);
+}
+
+export async function getCategory(userId: string, categoryId: string): Promise<OtomotoCategoryResponse> {
+  const token = await getValidAccessToken(userId);
+  return otomotoRequest<OtomotoCategoryResponse>(token, 'GET', `/categories/${encodeURIComponent(categoryId)}`);
+}
+
+export async function getAccountAdverts(userId: string): Promise<OtomotoAdvertsResponse> {
+  const token = await getValidAccessToken(userId);
+  return otomotoRequest<OtomotoAdvertsResponse>(token, 'GET', '/account/adverts');
 }
 
 async function otomotoRequest<T>(

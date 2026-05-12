@@ -2,6 +2,7 @@ import axios from 'axios';
 import jwt from 'jsonwebtoken';
 import { Platform } from '@prisma/client';
 import { AppError } from '../middleware/error.middleware';
+import { encrypt } from '../utils/crypto';
 import { env } from '../utils/env';
 import { prisma } from '../utils/prisma';
 import { tryDecrypt, isExpiringSoon, storeTokens } from '../utils/token-refresh';
@@ -31,7 +32,6 @@ export function buildAuthorizationUrl(userId: string): string {
   const params = new URLSearchParams({
     response_type: 'code',
     client_id: env.OLX_CLIENT_ID,
-    client_secret: env.OLX_CLIENT_SECRET,
     scope: 'v2 read write',
     redirect_uri: env.OLX_REDIRECT_URI,
     state,
@@ -50,15 +50,15 @@ export async function exchangeCodeAndStoreConnection(code: string, state: string
       userId: payload.userId,
       platform: Platform.OLX,
       isActive: true,
-      accessToken: tokenResponse.access_token,
-      refreshToken: tokenResponse.refresh_token,
+      accessToken: encrypt(tokenResponse.access_token),
+      refreshToken: encrypt(tokenResponse.refresh_token),
       tokenExpiry: new Date(Date.now() + tokenResponse.expires_in * 1000),
       connectedAt: new Date(),
     },
     update: {
       isActive: true,
-      accessToken: tokenResponse.access_token,
-      refreshToken: tokenResponse.refresh_token,
+      accessToken: encrypt(tokenResponse.access_token),
+      refreshToken: encrypt(tokenResponse.refresh_token),
       tokenExpiry: new Date(Date.now() + tokenResponse.expires_in * 1000),
       connectedAt: new Date(),
     },
@@ -131,7 +131,12 @@ function verifyState(state: string): OAuthStatePayload {
 }
 
 function validateOAuthEnv(): void {
-  if (!env.OLX_CLIENT_ID || !env.OLX_CLIENT_SECRET || !env.OLX_REDIRECT_URI) {
-    throw new AppError(400, 'OLX OAuth not configured. Missing: OLX_CLIENT_ID, OLX_CLIENT_SECRET, OLX_REDIRECT_URI');
+  const missing: string[] = [];
+  if (!env.OLX_CLIENT_ID) missing.push('OLX_CLIENT_ID');
+  if (!env.OLX_CLIENT_SECRET) missing.push('OLX_CLIENT_SECRET');
+  if (!env.OLX_REDIRECT_URI) missing.push('OLX_REDIRECT_URI');
+
+  if (missing.length > 0) {
+    throw new AppError(400, `OLX OAuth not configured. Missing: ${missing.join(', ')}`);
   }
 }
