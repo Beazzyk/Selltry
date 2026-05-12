@@ -71,48 +71,57 @@ function buildPrompt(input: DescriptionInput): string {
     : `- ALLEGRO (max ${TITLE_LIMITS.ALLEGRO} znaków): marka + model + główna cecha + stan + słowa kluczowe SEO
 - OLX (max ${TITLE_LIMITS.OLX} znaków): skondensowana wersja z najważniejszymi frazami`;
 
-  const productLine = [
-    input.brand,
-    input.productModel,
-    input.vehicleMake,
-    input.vehicleModel,
-    input.vehicleYear,
-  ].filter(Boolean).join(' ');
+  // categoryName is the most specific identifier — put it first
+  const partName = input.categoryName ?? '';
+  const vehicleStr = [input.vehicleMake, input.vehicleModel, input.vehicleYear].filter(Boolean).join(' ');
+  const productStr = [input.brand, input.productModel].filter(Boolean).join(' ');
+  const productLine = [partName, vehicleStr || productStr].filter(Boolean).join(' ');
+  const productLabel = productLine || input.title || partName || (CATEGORY_CONTEXT[input.categoryType] ?? 'produkt');
 
-  const productLabel = productLine || input.title || (CATEGORY_CONTEXT[input.categoryType] ?? 'produkt');
+  const sideShort = input.partSide && input.partSide !== 'Nie dotyczy'
+    ? (input.partSide.toLowerCase().startsWith('lew') ? 'L' : 'P')
+    : '';
+
+  const autoTitleExample = [partName, vehicleStr, sideShort, CONDITION_PL[input.condition] ?? '']
+    .filter(Boolean).join(' ');
 
   return `Wygeneruj ogłoszenie sprzedażowe na polskie marketplace.
 
-DANE (użyj wszystkich dostępnych, brakujące pomiń lub uzupełnij z wiedzy ogólnej):
-Kategoria: ${CATEGORY_CONTEXT[input.categoryType] ?? input.categoryType}
-Produkt: ${productLabel}
+DANE PRODUKTU:
+${partName ? `Nazwa części/produktu: ${partName}` : ''}
+${vehicleStr ? `Pojazd: ${vehicleStr}` : ''}
+${productStr ? `Marka/model produktu: ${productStr}` : ''}
 Stan: ${CONDITION_PL[input.condition] ?? 'używany'}
-${productInfo}
+${input.partSide && input.partSide !== 'Nie dotyczy' ? `Strona montażu: ${input.partSide}` : ''}
+${attrLines}
 
 ZASADA NADRZĘDNA: Zawsze zwróć kompletną odpowiedź w wymaganym formacie XML.
-Jeśli brakuje konkretnych danych — uzupełnij je z ogólnej wiedzy o tej kategorii produktu.
-Nigdy nie odmawiaj generowania ani nie proś o więcej informacji.
+Uzupełnij brakujące dane technicznie z wiedzy o produkcie. Nigdy nie odmawiaj.
 
-STYL — pisz jak sprzedawca na Allegro, nie jak asystent AI:
+TYTUŁY:
+${isAuto
+  ? `Wzór: [nazwa części] [marka pojazdu] [model] [rok] [L lub P jeśli dotyczy] [stan]
+Przykład na podstawie danych: "${autoTitleExample}"
+Pierwsze słowo = nazwa części (${partName || 'np. Chłodnica'}), NIE "Części" ani "Motoryzacja"`
+  : `Wzór: [marka] [model produktu] [kluczowa cecha] [stan]
+Pierwsze słowo = nazwa marki lub produktu (${partName || productStr || 'nazwa produktu'})`}
+- Pierwsza litera tytułu wielka, reszta małe
+- Zero zbędnej interpunkcji
+
+STYL opisu — pisz jak sprzedawca, nie AI:
 - Żadnych: "Świetna okazja", "Nie przegap", "Idealne dla", "Z przyjemnością"
-- Żadnych: nadmiarowych myślników (--- –––), gwiazdek *tekst*, wielokropków
-- Emoji tylko w nagłówkach h3, nie w tekście ani liście
-- Opis max 3 zdania — fakty, nie marketing
+- Żadnych: myślników (--- –––), gwiazdek *tekst*, wielokropków
+- Emoji tylko w nagłówkach h3
+- Opis max 3 zdania — fakty
 - Każdy punkt listy max 10 słów
 
-TYTUŁY — słowa kluczowe jak wpisuje kupujący w wyszukiwarkę:
-${isAuto
-  ? `- Dla aut: [część] [marka pojazdu] [model] [rok] [strona L/P] [stan]`
-  : `- [marka] [model] [kluczowa cecha] [stan]`}
-- Pierwsza litera wielka, reszta małe. Zero interpunkcji na końcu.
-
-FORMAT (zwróć dokładnie tę strukturę, nic więcej):
+FORMAT (tylko ta struktura, nic więcej):
 
 <titles>
-<main>${isAuto ? 'część marka model rok strona stan — max 68 znaków' : 'marka model główna cecha stan — max 65 znaków'}</main>
-<ALLEGRO>tytuł SEO max ${TITLE_LIMITS.ALLEGRO} znaków — słowa kluczowe kupującego</ALLEGRO>
-<OLX>tytuł max ${TITLE_LIMITS.OLX} znaków — najważniejsze frazy</OLX>
-${isAuto ? `<OTOMOTO>tytuł max ${TITLE_LIMITS.OTOMOTO} znaków pod Otomoto</OTOMOTO>` : ''}
+<main>${isAuto ? autoTitleExample || `${partName} ${vehicleStr}`.trim() : `${productStr || partName}`} — max ${TITLE_LIMITS.OLX} znaków</main>
+<ALLEGRO>jak main ale max ${TITLE_LIMITS.ALLEGRO} znaków z dodatkowymi słowami kluczowymi</ALLEGRO>
+<OLX>jak main ale max ${TITLE_LIMITS.OLX} znaków</OLX>
+${isAuto ? `<OTOMOTO>jak main ale max ${TITLE_LIMITS.OTOMOTO} znaków</OTOMOTO>` : ''}
 </titles>
 <description>
 <div class="listing-description">
@@ -128,7 +137,7 @@ ${isAuto ? `<OTOMOTO>tytuł max ${TITLE_LIMITS.OTOMOTO} znaków pod Otomoto</OTO
 <h3>Specyfikacja</h3>
 <table>
 <tr><th>Parametr</th><th>Wartość</th></tr>
-[Min 6 wierszy z rzeczywistymi danymi dla ${productLine || 'tego modelu'} — bez pustych pól]
+[Min 6 wierszy z rzeczywistymi danymi dla ${productLabel} — bez pustych pól]
 </table>
 
 <h3>Wymiary</h3>
