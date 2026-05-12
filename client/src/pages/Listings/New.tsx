@@ -38,6 +38,7 @@ export default function NewListingPage() {
   const [data, setData] = useState<WizardData>(WIZARD_DEFAULTS);
   const [submitting, setSubmitting] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [createdListingId, setCreatedListingId] = useState<string | null>(null);
 
   const isAuto = data.categoryType === 'AUTOMOTIVE';
   const STEPS = isAuto ? STEPS_AUTO : STEPS_GENERIC;
@@ -64,30 +65,37 @@ export default function NewListingPage() {
 
     setSubmitting(true);
     try {
-      const listing = await createListing({
-        title: data.title,
-        description: data.description,
-        basePrice: data.basePrice,
-        condition: data.condition,
-        quantity: data.quantity ?? 1,
-        identMethod: data.identMethod,
-        vin: data.vin,
-        catalogNumber: data.catalogNumber,
-        vehicleType: data.vehicleType,
-        vehicleMakeId: data.vehicleMakeId,
-        vehicleModelId: data.vehicleModelId,
-        vehicleGenId: data.vehicleGenId,
-        vehicleYearRaw: data.vehicleYearRaw,
-        vehicleEngine: data.vehicleEngine,
-        categoryId: data.categoryId,
-        partSide: data.partSide,
-        partDetails: data.partDetails,
-        damageDescription: data.damageDescription,
-        attributes: Object.keys(data.attributes).length > 0 ? data.attributes : undefined,
-      });
+      // If listing already created (retry after partial failure), skip create
+      let listingId = createdListingId;
 
-      if (data.images.length > 0) await uploadImages(listing.id, data.images);
-      if (data.selectedPlatforms.length > 0) await publishListing(listing.id, data.selectedPlatforms);
+      if (!listingId) {
+        const listing = await createListing({
+          title: data.title,
+          description: data.description,
+          basePrice: data.basePrice,
+          condition: data.condition,
+          quantity: data.quantity ?? 1,
+          identMethod: data.identMethod,
+          vin: data.vin,
+          catalogNumber: data.catalogNumber,
+          vehicleType: data.vehicleType,
+          vehicleMakeId: data.vehicleMakeId,
+          vehicleModelId: data.vehicleModelId,
+          vehicleGenId: data.vehicleGenId,
+          vehicleYearRaw: data.vehicleYearRaw,
+          vehicleEngine: data.vehicleEngine,
+          categoryId: data.categoryId,
+          partSide: data.partSide,
+          partDetails: data.partDetails,
+          damageDescription: data.damageDescription,
+          attributes: Object.keys(data.attributes).length > 0 ? data.attributes : undefined,
+        });
+        listingId = listing.id;
+        setCreatedListingId(listing.id);
+      }
+
+      if (data.images.length > 0) await uploadImages(listingId, data.images);
+      if (data.selectedPlatforms.length > 0) await publishListing(listingId, data.selectedPlatforms);
 
       toast('Ogłoszenie zostało zapisane!', 'success');
       navigate('/listings');

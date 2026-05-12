@@ -130,6 +130,7 @@ export default function ListingsPage() {
               <th className="px-4 py-3 text-left font-medium text-gray-600">Stan</th>
               <th className="px-4 py-3 text-left font-medium text-gray-600">Cena bazowa</th>
               <th className="px-4 py-3 text-left font-medium text-gray-600">Status</th>
+              <th className="px-4 py-3 text-left font-medium text-gray-600">Platformy</th>
               <th className="px-4 py-3 text-right font-medium text-gray-600">Akcje</th>
             </tr>
           </thead>
@@ -138,7 +139,7 @@ export default function ListingsPage() {
 
             {!isLoading && items.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-16 text-center">
+                <td colSpan={7} className="px-4 py-16 text-center">
                   <Package className="mx-auto h-10 w-10 text-gray-300 mb-3" />
                   <p className="text-gray-500">Brak ogłoszeń</p>
                   <Button asChild className="mt-3" variant="outline" size="sm">
@@ -177,6 +178,24 @@ export default function ListingsPage() {
                 </td>
                 <td className="px-4 py-3">
                   <StatusBadge status={listing.status} />
+                </td>
+                <td className="px-4 py-3">
+                  <div className="flex flex-wrap gap-1">
+                    {listing.platformListings.length === 0 ? (
+                      <span className="text-xs text-gray-400">Szkic</span>
+                    ) : (
+                      listing.platformListings.map((pl) => (
+                        <span key={pl.platform} className={`inline-flex items-center text-[10px] font-medium px-1.5 py-0.5 rounded ${
+                          pl.status === 'ACTIVE'  ? 'bg-green-100 text-green-700' :
+                          pl.status === 'ERROR'   ? 'bg-red-100 text-red-600' :
+                          pl.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' :
+                          'bg-gray-100 text-gray-500'
+                        }`}>
+                          {pl.platform}
+                        </span>
+                      ))
+                    )}
+                  </div>
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex justify-end gap-1">
