@@ -5,6 +5,7 @@ import { ProtectedRoute } from '@/components/shared/ProtectedRoute';
 import { ToastProvider } from '@/components/ui/toast';
 import { useAuthStore } from '@/store/auth.store';
 import { getMe } from '@/api/auth.api';
+import LandingPage from '@/pages/Landing';
 import LoginPage from '@/pages/Auth/Login';
 import RegisterPage from '@/pages/Auth/Register';
 import DashboardPage from '@/pages/Dashboard';
@@ -32,19 +33,27 @@ function AuthLoader({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function HomeRoute() {
+  const user = useAuthStore((s) => s.user);
+  const loading = useAuthStore((s) => s.isLoading);
+  if (loading) return null;
+  if (user) return <Navigate to="/dashboard" replace />;
+  return <LandingPage />;
+}
+
 export default function App() {
   return (
     <ToastProvider>
       <BrowserRouter>
         <AuthLoader>
           <Routes>
+            <Route path="/" element={<HomeRoute />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
 
             <Route element={<ProtectedRoute />}>
               <Route element={<Layout />}>
                 <Route path="/dashboard" element={<DashboardPage />} />
-                <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/listings" element={<ListingsPage />} />
                 <Route path="/listings/new" element={<NewListingPage />} />
                 <Route path="/listings/:id/edit" element={<EditListingPage />} />

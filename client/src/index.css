@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -6,6 +8,97 @@
   body {
     @apply bg-gray-50 text-gray-900 antialiased;
   }
+}
+
+/* ── Selltry design tokens (scoped to .landing) ── */
+.landing {
+  --bg:       #F6F3EA;
+  --bg-2:     #EFEBDF;
+  --surface:  #FFFFFF;
+  --surface-2:#FBF9F3;
+  --ink:      #0E1B2C;
+  --ink-2:    #1F3247;
+  --muted:    #6F7C8C;
+  --border:   #E6DFCD;
+  --border-2: #D9D0B9;
+  --border-strong: #C9BFA4;
+  --navy:     #163D6E;
+  --orange:   #FF6A1A;
+  --orange-2: #E55807;
+  --orange-3: #FFEDDF;
+  --teal:     #0E7C66;
+  --success:  #16794B;
+  --danger:   #B2331F;
+  --shadow-2: 0 8px 24px -8px rgba(14,27,44,.10);
+  --shadow-3: 0 24px 64px -24px rgba(14,27,44,.25), 0 8px 24px -8px rgba(14,27,44,.10);
+  --pf-allegro:    #FF5A2C; --pf-allegro-bg: #FFE7DC;
+  --pf-olx:        #5C9300; --pf-olx-bg:     #ECF4D6;
+  --pf-otomoto:    #C3252A; --pf-otomoto-bg: #FBDDDD;
+  --pf-ovoko:      #1F66C2; --pf-ovoko-bg:   #DCE8F8;
+  --font-sans: 'DM Sans', system-ui, sans-serif;
+  --font-mono: 'DM Mono', ui-monospace, monospace;
+
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Landing type scale */
+.landing .t-display { font-size: clamp(44px, 6vw, 84px); line-height: 1.02; letter-spacing: -0.03em; font-weight: 600; margin: 0; }
+.landing .t-h2      { font-size: clamp(26px, 2.4vw, 40px); line-height: 1.1; letter-spacing: -0.02em; font-weight: 600; margin: 0; }
+.landing .t-eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.landing .t-mono    { font-family: var(--font-mono); }
+.landing ::selection { background: var(--orange); color: #fff; }
+
+/* Landing buttons */
+.landing .btn { display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 18px; border-radius: 10px; font-family: var(--font-sans); font-weight: 500; font-size: 15px; cursor: pointer; border: 1px solid transparent; transition: all .15s ease; text-decoration: none; white-space: nowrap; }
+.landing .btn-sm { height: 34px; padding: 0 12px; font-size: 13.5px; border-radius: 6px; }
+.landing .btn-cta { background: var(--orange); color: #fff; }
+.landing .btn-cta:hover { background: var(--orange-2); }
+.landing .btn-secondary { background: var(--surface); color: var(--ink); border-color: var(--border-2); }
+.landing .btn-secondary:hover { background: var(--surface-2); border-color: var(--border-strong); }
+.landing .btn-ghost { background: transparent; color: var(--ink); }
+.landing .btn-ghost:hover { background: rgba(14,27,44,.06); }
+
+/* Platform chips */
+.landing .pf-chip { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 9px 0 7px; border-radius: 6px; font-family: var(--font-mono); font-size: 11px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; }
+.landing .pf-allegro { background: var(--pf-allegro-bg); color: var(--pf-allegro); }
+.landing .pf-olx     { background: var(--pf-olx-bg); color: var(--pf-olx); }
+.landing .pf-otomoto { background: var(--pf-otomoto-bg); color: var(--pf-otomoto); }
+.landing .pf-ovoko   { background: var(--pf-ovoko-bg); color: var(--pf-ovoko); }
+.landing .pf-chip .pf-mark { width: 8px; height: 8px; border-radius: 2px; }
+.landing .pf-allegro .pf-mark { background: var(--pf-allegro); }
+.landing .pf-olx .pf-mark     { background: var(--pf-olx); }
+.landing .pf-otomoto .pf-mark { background: var(--pf-otomoto); }
+.landing .pf-ovoko .pf-mark   { background: var(--pf-ovoko); }
+
+/* Platform dots */
+.landing .pf-dot { border-radius: 4px; }
+.landing .pf-dot.a { background: var(--pf-allegro); }
+.landing .pf-dot.o { background: var(--pf-olx); }
+.landing .pf-dot.m { background: var(--pf-otomoto); }
+.landing .pf-dot.v { background: var(--pf-ovoko); }
+.landing .pf-dot.off { background: var(--border-2); }
+
+@keyframes l-pulse { 0%,100% { box-shadow: 0 0 0 4px rgba(22,121,75,.18); } 50% { box-shadow: 0 0 0 8px rgba(22,121,75,0); } }
+
+/* Landing layout */
+.landing-wrap { max-width: 1240px; margin: 0 auto; padding: 0 32px; }
+@media (max-width: 720px) { .landing-wrap { padding: 0 20px; } }
+.hero-mock-frame { grid-template-columns: 220px 1fr !important; }
+@media (max-width: 900px) {
+  .hero-mock-frame { grid-template-columns: 1fr !important; }
+  .hero-float-pub { display: none !important; }
+  .problem-grid { grid-template-columns: 1fr !important; }
+  .steps-grid { grid-template-columns: 1fr !important; }
+  .features-grid { grid-template-columns: 1fr !important; }
+  .integ-grid { grid-template-columns: repeat(2,1fr) !important; }
+  .pricing-grid { grid-template-columns: 1fr !important; }
+  .demo-strip { padding: 40px 24px 0 !important; border-radius: 18px !important; }
+  .demo-inner-grid { grid-template-columns: 1fr !important; }
+  .foot-grid { grid-template-columns: 1fr 1fr !important; gap: 32px !important; }
+  .landing-nav-links { display: none !important; }
 }
 
 /* AI-generated listing description template */
