@@ -97,8 +97,14 @@ export interface GenerateDescriptionInput {
   attributes?: Record<string, unknown>;
 }
 
-export async function generateDescription(input: GenerateDescriptionInput): Promise<{ description: string }> {
-  const { data } = await apiClient.post<{ description: string }>('/listings/generate-description', input);
+export interface GenerateResult {
+  title: string;
+  platformTitles: Record<string, string>;
+  description: string;
+}
+
+export async function generateDescription(input: GenerateDescriptionInput): Promise<GenerateResult> {
+  const { data } = await apiClient.post<GenerateResult>('/listings/generate-description', input);
   return data;
 }
 

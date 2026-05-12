@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { WizardData } from './types';
 import { Condition } from '@/types';
 import { useDescriptionGenerator } from '@/hooks/useDescriptionGenerator';
+import { PlatformTitleSuggestions } from '@/components/listings/PlatformTitleSuggestions';
 
 interface Props {
   data: WizardData;
@@ -83,6 +84,13 @@ export function Step2Details({ data, onChange }: Props) {
         <Input id="title" placeholder="np. Lampa tylna Suzuki Samurai 1990 prawa"
           value={data.title ?? ''} onChange={(e) => onChange({ title: e.target.value || undefined })} maxLength={200} />
         <p className="text-xs text-gray-400 mt-1 text-right">{(data.title ?? '').length}/200</p>
+        {data.platformTitles && (
+          <PlatformTitleSuggestions
+            platformTitles={data.platformTitles}
+            currentTitle={data.title ?? ''}
+            onSelect={(t) => onChange({ title: t })}
+          />
+        )}
       </div>
 
       <div>

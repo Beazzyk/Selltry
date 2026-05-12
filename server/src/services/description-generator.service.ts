@@ -15,10 +15,23 @@ export interface DescriptionInput {
   attributes?: Record<string, unknown>;
 }
 
+export interface GenerateResult {
+  title: string;
+  platformTitles: {
+    ALLEGRO: string;
+    OLX: string;
+    OTOMOTO?: string;
+    OVOKO?: string;
+  };
+  description: string;
+}
+
+const TITLE_LIMITS = { ALLEGRO: 75, OLX: 70, OTOMOTO: 80, OVOKO: 100 };
+
 const CONDITION_PL: Record<string, string> = {
-  NEW: 'Nowy — nieużywany, w oryginalnym opakowaniu lub fabrycznie nowy',
-  USED: 'Używany — produkt sprawny, mogą występować ślady normalnego użytkowania',
-  DAMAGED: 'Uszkodzony — produkt wymaga naprawy lub przeznaczony na części',
+  NEW: 'Nowy',
+  USED: 'Używany',
+  DAMAGED: 'Uszkodzony/Na części',
 };
 
 const CATEGORY_CONTEXT: Record<string, string> = {
@@ -38,6 +51,7 @@ function buildPrompt(input: DescriptionInput): string {
     .map(([k, v]) => `- ${k}: ${String(v)}`)
     .join('\n');
 
+  const isAuto = input.categoryType === 'AUTOMOTIVE';
   const vehicleInfo = input.vehicleMake
     ? `Pojazd: ${input.vehicleMake} ${input.vehicleModel ?? ''} ${input.vehicleYear ?? ''}`.trim()
     : '';
@@ -50,97 +64,152 @@ function buildPrompt(input: DescriptionInput): string {
     attrLines,
   ].filter(Boolean).join('\n');
 
-  return `Jesteś ekspertem ds. e-commerce i copywriterem dla polskich marketplace (Allegro, OLX, Otomoto).
-Napisz KOMPLETNY, profesjonalny opis ogłoszenia sprzedażowego w języku polskim.
+  const titleInstructions = isAuto
+    ? `- ALLEGRO (max ${TITLE_LIMITS.ALLEGRO} znaków): marka+model pojazdu + część + rok + strona + stan + słowa kluczowe
+- OLX (max ${TITLE_LIMITS.OLX} znaków): skondensowana wersja z kluczowymi informacjami
+- OTOMOTO (max ${TITLE_LIMITS.OTOMOTO} znaków): nacisk na kompatybilność pojazdu i część`
+    : `- ALLEGRO (max ${TITLE_LIMITS.ALLEGRO} znaków): marka + model + główna cecha + stan + słowa kluczowe SEO
+- OLX (max ${TITLE_LIMITS.OLX} znaków): skondensowana wersja z najważniejszymi frazami`;
+
+  return `Jesteś ekspertem SEO i copywriterem dla polskich marketplace.
+Dla podanego produktu wygeneruj TYTUŁY i OPIS MARKETINGOWY.
 
 DANE PRODUKTU:
-Tytuł: ${input.title}
+Tytuł bazowy: ${input.title}
 Kategoria: ${CATEGORY_CONTEXT[input.categoryType] ?? input.categoryType}
 Stan: ${CONDITION_PL[input.condition] ?? input.condition}
 ${productInfo}
 
-INSTRUKCJE:
-1. Użyj swojej wiedzy o tym produkcie (marka + model) żeby uzupełnić PEŁNĄ specyfikację techniczną — parametry, wymiary, waga, materiały, kompatybilność.
-2. Napisz opisy sekcji w stylu przekonującego copywritingu — korzyści dla kupującego, nie tylko suche fakty.
-3. Uwzględnij słowa kluczowe SEO naturalnie wplecione w tekst.
-4. Struktura MUSI zawierać dokładnie te sekcje (użyj nagłówków HTML):
+ZASADY TYTUŁÓW:
+• Używaj słów kluczowych które kupujący wpisują w wyszukiwarce
+• Umieszczaj najważniejsze informacje na początku (marka, model, typ produktu)
+• Dla używanych: podaj rok, stan, markę
+• Nie używaj CAPS LOCK dla całego tytułu — tylko pierwsza litera wyrazu
+• Unikaj zbędnych znaków interpunkcyjnych
 
+WYMAGANY FORMAT ODPOWIEDZI (dokładnie taka struktura, bez żadnych dodatkowych komentarzy):
+
+<titles>
+<main>${isAuto ? '[Marka pojazdu] [Model] [rok] [część] [strona] [stan] — SEO-friendly max 70 znaków' : '[Marka] [Model] [główna cecha] [stan] — SEO max 65 znaków'}</main>
+<ALLEGRO>${titleInstructions.split('\n')[0].replace(/^- ALLEGRO.*: /, '')}</ALLEGRO>
+<OLX>${titleInstructions.split('\n')[1].replace(/^- OLX.*: /, '')}</OLX>
+${isAuto ? '<OTOMOTO>[tytuł zoptymalizowany pod Otomoto max 80 znaków]</OTOMOTO>' : ''}
+</titles>
+<description>
 <div class="listing-description">
 
 <h3>📦 Opis produktu</h3>
-<p>[2-3 zdania marketingowego opisu — dlaczego warto kupić, co wyróżnia produkt]</p>
+<p>[2-3 zdania marketingowego opisu — korzyści dla kupującego, unikalna wartość]</p>
 
 <h3>✅ Kluczowe cechy</h3>
 <ul>
-[5-8 punktów z najważniejszymi cechami i zaletami — używaj emoji dla wizualności]
+[5-8 punktów z emoji — najważniejsze cechy i zalety TEGO KONKRETNEGO modelu]
 </ul>
 
 <h3>🔧 Specyfikacja techniczna</h3>
 <table>
 <tr><th>Parametr</th><th>Wartość</th></tr>
-[WYPEŁNIJ na podstawie wiedzy o modelu — min. 6 wierszy]
+[Uzupełnij z wiedzy o modelu ${input.brand ?? ''} ${input.productModel ?? ''} — minimum 6 wierszy z konkretnymi danymi]
 </table>
 
 <h3>📐 Wymiary i waga</h3>
-<p>[Wymiary i waga produktu jeśli znane lub szacunkowe dla modelu]</p>
+<p>[Rzeczywiste wymiary i waga produktu dla tego modelu]</p>
 
-<h3>🚗 Kompatybilność / Zastosowanie</h3>
-<p>[Dla części — pasujące pojazdy/modele; dla elektroniki — kompatybilność; dla innych — zakres zastosowania]</p>
+<h3>${isAuto ? '🚗 Kompatybilność pojazdów' : '🔗 Zastosowanie i kompatybilność'}</h3>
+<p>[${isAuto ? 'Lista pasujących pojazdów/silników' : 'Zakres zastosowania, kompatybilność z innymi urządzeniami/systemami'}]</p>
 
 <h3>⭐ Stan produktu</h3>
 <p>[Szczegółowy opis stanu: ${CONDITION_PL[input.condition] ?? input.condition}]</p>
 
 <h3>📬 Wysyłka i pakowanie</h3>
-<p>[Informacje o pakowaniu, możliwości wysyłki kurierem, odbioru osobistego]</p>
+<p>[Informacje o pakowaniu, kurierze, odbiorze osobistym]</p>
 
 </div>
+</description>
 
-WAŻNE: Zwróć TYLKO kod HTML bez żadnych komentarzy, markdownu ani dodatkowego tekstu.
-Cały opis musi być po polsku. Bądź konkretny i szczegółowy — kupujący docenią szczegóły techniczne.`;
+WAŻNE: Zwróć TYLKO powyższą strukturę XML, bez żadnego dodatkowego tekstu przed ani po.
+Wszystkie treści w języku polskim. Bądź konkretny — podawaj rzeczywiste dane techniczne.`;
 }
 
-function mockDescription(input: DescriptionInput): string {
+function parseResponse(raw: string): GenerateResult {
+  const titlesMatch = raw.match(/<titles>([\s\S]*?)<\/titles>/);
+  const descMatch = raw.match(/<description>([\s\S]*?)<\/description>/);
+
+  const titlesBlock = titlesMatch?.[1] ?? '';
+  const description = descMatch?.[1]?.trim() ?? raw;
+
+  function extractTag(tag: string): string {
+    const m = titlesBlock.match(new RegExp(`<${tag}>(.*?)</${tag}>`, 's'));
+    return m?.[1]?.trim() ?? '';
+  }
+
+  const main = extractTag('main');
+  const allegro = extractTag('ALLEGRO');
+  const olx = extractTag('OLX');
+  const otomoto = extractTag('OTOMOTO');
+
+  return {
+    title: main || allegro || olx || '',
+    platformTitles: {
+      ALLEGRO: (allegro || main).slice(0, TITLE_LIMITS.ALLEGRO),
+      OLX: (olx || main).slice(0, TITLE_LIMITS.OLX),
+      ...(otomoto ? { OTOMOTO: otomoto.slice(0, TITLE_LIMITS.OTOMOTO) } : {}),
+    },
+    description,
+  };
+}
+
+function mockResult(input: DescriptionInput): GenerateResult {
+  const base = input.title;
   const brand = input.brand ?? '';
   const model = input.productModel ?? '';
-  return `<div class="listing-description">
-<h3>📦 Opis produktu</h3>
-<p>Oferuję ${input.title} w stanie: ${CONDITION_PL[input.condition] ?? input.condition}. Produkt gotowy do natychmiastowej wysyłki.</p>
+  const cond = CONDITION_PL[input.condition] ?? '';
 
+  const description = `<div class="listing-description">
+<h3>📦 Opis produktu</h3>
+<p>Oferuję ${base}. Produkt w stanie: <strong>${cond}</strong>. Gotowy do wysyłki.</p>
 <h3>✅ Kluczowe cechy</h3>
 <ul>
 <li>🏷️ Marka: ${brand} ${model}</li>
-<li>📦 Stan: ${CONDITION_PL[input.condition] ?? input.condition}</li>
+<li>📦 Stan: ${cond}</li>
 <li>✅ Sprawdzony przed wysyłką</li>
-<li>🚀 Szybka wysyłka — następny dzień roboczy</li>
+<li>🚀 Wysyłka w 24h</li>
 </ul>
-
 <h3>🔧 Specyfikacja techniczna</h3>
 <table>
 <tr><th>Parametr</th><th>Wartość</th></tr>
 <tr><td>Marka</td><td>${brand}</td></tr>
 <tr><td>Model</td><td>${model}</td></tr>
-<tr><td>Stan</td><td>${input.condition}</td></tr>
+<tr><td>Stan</td><td>${cond}</td></tr>
 </table>
-
 <h3>📬 Wysyłka i pakowanie</h3>
-<p>Produkt zostanie starannie zapakowany i wysłany kurierem w ciągu 24h od zaksięgowania płatności.</p>
+<p>Starannie zapakowane, wysyłka kurierem DPD/DHL w ciągu 24h.</p>
 </div>`;
+
+  return {
+    title: base.slice(0, 70),
+    platformTitles: {
+      ALLEGRO: base.slice(0, 75),
+      OLX: base.slice(0, 70),
+    },
+    description,
+  };
 }
 
 const anthropic = env.ANTHROPIC_API_KEY ? new Anthropic({ apiKey: env.ANTHROPIC_API_KEY }) : null;
 
-export async function generateDescription(input: DescriptionInput): Promise<string> {
+export async function generateDescription(input: DescriptionInput): Promise<GenerateResult> {
   if (!anthropic) {
     // MOCK MODE — wymaga ANTHROPIC_API_KEY
-    return mockDescription(input);
+    return mockResult(input);
   }
 
   const message = await anthropic.messages.create({
     model: 'claude-haiku-4-5-20251001',
-    max_tokens: 2048,
+    max_tokens: 2500,
     messages: [{ role: 'user', content: buildPrompt(input) }],
   });
 
-  const text = message.content.find((b) => b.type === 'text')?.text ?? '';
-  return text.trim();
+  const raw = message.content.find((b) => b.type === 'text')?.text ?? '';
+  return parseResponse(raw);
 }

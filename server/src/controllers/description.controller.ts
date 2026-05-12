@@ -21,8 +21,8 @@ const generateSchema = z.object({
 export async function generateListingDescription(req: Request, res: Response, next: NextFunction) {
   try {
     const input = generateSchema.parse(req.body);
-    const html = await generateDescription(input);
-    res.json({ description: html });
+    const result = await generateDescription(input);
+    res.json(result);
   } catch (err) {
     next(err);
   }
@@ -34,7 +34,7 @@ export async function generateFromExistingListing(req: Request, res: Response, n
     const listing = await listingService.getListing(uid, req.params.id);
     const attrs = (listing.attributes ?? {}) as Record<string, unknown>;
 
-    const html = await generateDescription({
+    const result = await generateDescription({
       categoryType: 'AUTOMOTIVE',
       condition: listing.condition,
       title: listing.title,
@@ -43,7 +43,7 @@ export async function generateFromExistingListing(req: Request, res: Response, n
       attributes: attrs,
     });
 
-    res.json({ description: html });
+    res.json(result);
   } catch (err) {
     next(err);
   }

@@ -28,9 +28,13 @@ export function useDescriptionGenerator() {
         attributes: attrs,
       });
 
-      onChange({ description: result.description });
+      onChange({
+        title: result.title || data.title,
+        platformTitles: result.platformTitles,
+        description: result.description,
+      });
     } catch {
-      setError('Błąd generowania opisu. Spróbuj ponownie.');
+      setError('Błąd generowania. Sprawdź klucz API lub spróbuj ponownie.');
     } finally {
       setLoading(false);
     }

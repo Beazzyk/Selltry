@@ -42,6 +42,9 @@ export interface WizardData {
   // Step 3
   images: File[];
 
+  // AI-generated platform title suggestions
+  platformTitles?: Record<string, string>;
+
   // Step 4
   basePrice?: number;
   quantity?: number;

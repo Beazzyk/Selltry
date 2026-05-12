@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { CategoryType } from '@/types';
 import { BrandSelect } from '@/components/shared/BrandSelect';
 import { useDescriptionGenerator } from '@/hooks/useDescriptionGenerator';
+import { PlatformTitleSuggestions } from '@/components/listings/PlatformTitleSuggestions';
 import { WizardData } from './types';
 
 const CONDITION_OPTIONS = [
@@ -111,6 +112,14 @@ export function Step2FieldsGeneric({ data, onChange }: Props) {
       <div>
         <Label>Tytuł ogłoszenia *</Label>
         <Input className="mt-1" placeholder="Krótki, opisowy tytuł..." value={data.title ?? ''} onChange={(e) => onChange({ title: e.target.value })} />
+        <p className="text-xs text-gray-400 mt-1 text-right">{(data.title ?? '').length} znaków</p>
+        {data.platformTitles && (
+          <PlatformTitleSuggestions
+            platformTitles={data.platformTitles}
+            currentTitle={data.title ?? ''}
+            onSelect={(t) => onChange({ title: t })}
+          />
+        )}
       </div>
 
       <div>
