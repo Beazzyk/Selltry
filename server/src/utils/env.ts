@@ -20,6 +20,7 @@ export const env = {
   JWT_SECRET: requireEnv('JWT_SECRET'),
   JWT_REFRESH_SECRET: requireEnv('JWT_REFRESH_SECRET'),
   ENCRYPTION_KEY: requireEnv32Chars('ENCRYPTION_KEY'),
+  REDIS_URL: process.env.REDIS_URL ?? 'redis://localhost:6379',
   S3_ENDPOINT: process.env.S3_ENDPOINT ?? '',
   S3_BUCKET: process.env.S3_BUCKET ?? '',
   S3_REGION: process.env.S3_REGION ?? 'us-east-1',

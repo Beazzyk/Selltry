@@ -3,12 +3,11 @@ import { z } from 'zod';
 import { AuthRequest } from '../middleware/auth.middleware';
 import * as listingService from '../services/listing.service';
 import * as imageService from '../services/image.service';
-import { ListingStatus, Platform, PlatformStatus } from '@prisma/client';
 import * as titleGeneratorService from '../services/title-generator.service';
-import * as marginService from '../services/margin.service';
-import { getPlatformService } from '../services/platforms';
-import * as categoryService from '../services/category.service';
+import { ListingStatus, Platform, PlatformStatus } from '@prisma/client';
 import * as syncService from '../services/sync.service';
+import * as publishService from '../services/listing-publish.service';
+import { enqueuePublish } from '../jobs/publish.job';
 import { prisma } from '../utils/prisma';
 
 const createSchema = z.object({
@@ -164,6 +163,7 @@ export async function publishListing(req: Request, res: Response, next: NextFunc
     const { platforms } = publishSchema.parse(req.body);
     const uid = userId(req);
     const listing = await listingService.getListing(uid, req.params.id);
+
     if (!listing.title || !listing.categoryId || listing.images.length === 0) {
       res.status(400).json({ error: 'Listing must have title, category and images' });
       return;
@@ -173,59 +173,24 @@ export async function publishListing(req: Request, res: Response, next: NextFunc
       where: { userId: uid, platform: { in: platforms as Platform[] }, isActive: true },
       select: { platform: true },
     });
-    const activeSet = new Set(activePlatforms.map((item) => item.platform));
-    const disconnected = platforms.filter((platform) => !activeSet.has(platform as Platform));
+    const activeSet = new Set(activePlatforms.map((p) => p.platform));
+    const disconnected = platforms.filter((p) => !activeSet.has(p as Platform));
     if (disconnected.length > 0) {
       res.status(400).json({ error: `Disconnected platforms: ${disconnected.join(', ')}` });
       return;
     }
 
-    const marginRules = await marginService.getMarginRules(uid);
-    const results: Record<string, string> = {};
+    await publishService.preparePublish(uid, listing.id, platforms);
 
-    await prisma.listing.update({ where: { id: listing.id }, data: { status: ListingStatus.PUBLISHING } });
-
-    for (const platform of platforms) {
-      const rule = marginRules.find((item) => item.platform === platform);
-      const finalPrice = marginService.calculateFinalPrice(Number(listing.basePrice), rule ?? null);
-      const platformTitle = await titleGeneratorService.generateTitle(listing, platform as Platform);
-
-      await prisma.platformListing.upsert({
-        where: { listingId_platform: { listingId: listing.id, platform: platform as Platform } },
-        create: { listingId: listing.id, platform: platform as Platform, finalPrice, platformTitle, status: PlatformStatus.PENDING },
-        update: { finalPrice, platformTitle, status: PlatformStatus.PENDING, errorMessage: null },
-      });
-
-      try {
-        const categoryId = await categoryService.getExternalCategoryId(listing.categoryId, platform as Platform);
-        const dbListing = await prisma.listing.findUnique({
-          where: { id: listing.id },
-          include: { category: true, images: true },
-        });
-        const service = getPlatformService(platform as Platform);
-        const result = await service.publishListing(dbListing!, categoryId);
-
-        await prisma.platformListing.update({
-          where: { listingId_platform: { listingId: listing.id, platform: platform as Platform } },
-          data: { externalId: result.externalId, externalUrl: result.externalUrl, status: PlatformStatus.ACTIVE, publishedAt: new Date() },
-        });
-        results[platform] = 'ACTIVE';
-      } catch (err) {
-        const message = err instanceof Error ? err.message : 'Unknown error';
-        await prisma.platformListing.update({
-          where: { listingId_platform: { listingId: listing.id, platform: platform as Platform } },
-          data: { status: PlatformStatus.ERROR, errorMessage: message },
-        });
-        results[platform] = 'ERROR';
-      }
+    try {
+      await enqueuePublish({ userId: uid, listingId: listing.id, platforms });
+      res.status(202).json({ queued: true, message: 'Publication queued' });
+    } catch {
+      // Redis unavailable — fall back to synchronous publish
+      console.warn('[publishListing] Redis unavailable, publishing synchronously');
+      const results = await publishService.executePublish({ userId: uid, listingId: listing.id, platforms });
+      res.status(200).json({ queued: false, results });
     }
-
-    const allActive = Object.values(results).every((s) => s === 'ACTIVE');
-    const anyActive = Object.values(results).some((s) => s === 'ACTIVE');
-    const nextStatus = allActive ? ListingStatus.ACTIVE : anyActive ? ListingStatus.PARTIALLY_ACTIVE : ListingStatus.ERROR;
-    await prisma.listing.update({ where: { id: listing.id }, data: { status: nextStatus } });
-
-    res.status(200).json({ results });
   } catch (err) {
     next(err);
   }
