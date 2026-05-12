@@ -73,7 +73,17 @@ export interface Listing {
   quantity: number;
   identMethod: IdentMethod;
   vehicleType: VehicleType;
+  vehicleMakeId?: string;
+  vehicleModelId?: string;
+  vehicleGenId?: string;
+  vehicleYearRaw?: number;
+  vehicleEngine?: string;
+  vin?: string;
+  catalogNumber?: string;
   categoryId: string;
+  partSide?: string;
+  partDetails?: string;
+  damageDescription?: string;
   status: ListingStatus;
   createdAt: string;
   updatedAt: string;

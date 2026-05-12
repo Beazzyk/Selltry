@@ -10,6 +10,7 @@ import RegisterPage from '@/pages/Auth/Register';
 import DashboardPage from '@/pages/Dashboard';
 import ListingsPage from '@/pages/Listings';
 import NewListingPage from '@/pages/Listings/New';
+import EditListingPage from '@/pages/Listings/Edit';
 import PlatformsPage from '@/pages/Platforms';
 import OrdersPage from '@/pages/Orders';
 import SettingsPage from '@/pages/Settings';
@@ -46,6 +47,7 @@ export default function App() {
                 <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/listings" element={<ListingsPage />} />
                 <Route path="/listings/new" element={<NewListingPage />} />
+                <Route path="/listings/:id/edit" element={<EditListingPage />} />
                 <Route path="/platforms" element={<ErrorBoundary><PlatformsPage /></ErrorBoundary>} />
                 <Route path="/orders" element={<ErrorBoundary><OrdersPage /></ErrorBoundary>} />
                 <Route path="/settings" element={<ErrorBoundary><SettingsPage /></ErrorBoundary>} />

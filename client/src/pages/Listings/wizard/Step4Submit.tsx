@@ -6,7 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getPlatforms } from '@/api/platforms.api';
 import { getMarginRules } from '@/api/margins.api';
 
-const PLATFORMS: Platform[] = ['ALLEGRO', 'OVOKO', 'OTOMOTO', 'OLX', 'EBAY'];
+const PLATFORMS: Platform[] = ['ALLEGRO', 'OVOKO', 'OTOMOTO', 'OLX'];
 
 interface Props {
   data: WizardData;
