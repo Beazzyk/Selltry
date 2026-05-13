@@ -228,15 +228,26 @@ export async function syncStatus(req: Request, res: Response, next: NextFunction
 export async function getDashboardStats(req: Request, res: Response, next: NextFunction) {
   try {
     const uid = userId(req);
-    const [totalListings, activeListings, draftListings, recentListings, byPlatform] = await Promise.all([
+    const [totalListings, activeListings, draftListings, errorListings, endedListings, recentListings, byPlatform, connectedPlatforms] = await Promise.all([
       prisma.listing.count({ where: { userId: uid } }),
       prisma.listing.count({ where: { userId: uid, status: ListingStatus.ACTIVE } }),
       prisma.listing.count({ where: { userId: uid, status: ListingStatus.DRAFT } }),
-      prisma.listing.findMany({ where: { userId: uid }, orderBy: { createdAt: 'desc' }, take: 5 }),
+      prisma.listing.count({ where: { userId: uid, status: ListingStatus.ERROR } }),
+      prisma.listing.count({ where: { userId: uid, status: ListingStatus.ENDED } }),
+      prisma.listing.findMany({
+        where: { userId: uid },
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+        include: { images: { take: 1, orderBy: { order: 'asc' } }, platformListings: { select: { platform: true, status: true } } },
+      }),
       prisma.platformListing.groupBy({
         by: ['platform'],
         where: { listing: { userId: uid }, status: PlatformStatus.ACTIVE },
         _count: { _all: true },
+      }),
+      prisma.userPlatform.findMany({
+        where: { userId: uid, isActive: true },
+        select: { platform: true },
       }),
     ]);
 
@@ -244,7 +255,10 @@ export async function getDashboardStats(req: Request, res: Response, next: NextF
       totalListings,
       activeListings,
       draftListings,
+      errorListings,
+      endedListings,
       listingsByPlatform: byPlatform.map((item) => ({ platform: item.platform, active: item._count._all })),
+      connectedPlatforms: connectedPlatforms.map((p) => p.platform),
       recentListings,
     });
   } catch (err) {

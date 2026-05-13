@@ -1,7 +1,6 @@
 import { Outlet, useLocation } from 'react-router-dom';
 import * as Dialog from '@radix-ui/react-dialog';
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 
 const PAGE_TITLES: Record<string, string> = {
@@ -45,11 +44,7 @@ export function Layout() {
             </button>
             <h1>{title}</h1>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <Link to="/listings/new" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 34, padding: '0 14px', background: 'var(--orange)', color: '#fff', borderRadius: 8, fontSize: 13.5, fontWeight: 500, textDecoration: 'none', fontFamily: 'var(--font-sans)' }}>
-              + Nowe ogłoszenie
-            </Link>
-          </div>
+          <div />
         </header>
 
         <main className="app-content">
