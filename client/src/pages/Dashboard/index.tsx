@@ -1,4 +1,3 @@
-import { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '@/store/auth.store';
 import { useQuery } from '@tanstack/react-query';
@@ -20,42 +19,6 @@ const PF_META: Record<string, { bg: string; color: string; letter: string }> = {
   OVOKO:   { bg: 'var(--pf-ovoko-bg)',   color: 'var(--pf-ovoko)',   letter: 'V' },
 };
 
-const BAR_DATA = [
-  [2,1,1,0],[3,2,1,0],[2,2,1,1],[4,2,2,1],[3,2,1,1],
-  [5,3,2,1],[4,3,1,1],[5,4,2,2],[4,3,2,1],[6,4,3,2],
-  [5,4,2,1],[7,5,3,2],[6,4,3,1],[7,5,3,2],[6,4,2,2],
-  [8,6,4,2],[7,5,3,2],[9,6,4,3],[8,5,3,2],[9,7,4,3],
-];
-const PF_COLORS = ['var(--pf-allegro)','var(--pf-olx)','var(--pf-otomoto)','var(--pf-ovoko)'];
-
-function BarChart() {
-  const ref = useRef<SVGGElement>(null);
-  useEffect(() => {
-    if (!ref.current) return;
-    const W = 600, H = 180, gap = 5;
-    const colW = (W - gap * (BAR_DATA.length - 1)) / BAR_DATA.length;
-    const max = Math.max(...BAR_DATA.map(d => d.reduce((a, b) => a + b, 0)));
-    let html = '';
-    BAR_DATA.forEach((d, i) => {
-      let y = H - (d.reduce((a, b) => a + b, 0) / max) * H;
-      d.forEach((v, j) => {
-        const h = (v / max) * H;
-        html += `<rect x="${i * (colW + gap)}" y="${y.toFixed(1)}" width="${colW.toFixed(1)}" height="${h.toFixed(1)}" fill="${PF_COLORS[j]}" rx="${j === 0 ? 2 : 0}"/>`;
-        y += h;
-      });
-    });
-    ref.current.innerHTML = html;
-  }, []);
-
-  return (
-    <svg viewBox="0 0 600 180" preserveAspectRatio="none" style={{ width: '100%', height: 180, display: 'block' }}>
-      <g stroke="var(--border)" strokeWidth="1">
-        {[0, 45, 90, 135, 180].map(y => <line key={y} x1="0" y1={y} x2="600" y2={y} />)}
-      </g>
-      <g ref={ref} />
-    </svg>
-  );
-}
 
 const S = {
   panel: { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14 } as React.CSSProperties,
@@ -128,27 +91,10 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* Chart + Platforms */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 18 }} className="dash-grid">
-        <section style={S.panel}>
+      {/* Platforms */}
+      <section style={S.panel}>
           <div style={S.ph}>
-            <h3 style={S.phTitle}>Aktywność publikacji · 30 dni</h3>
-          </div>
-          <div style={{ padding: 20 }}>
-            <BarChart />
-            <div style={{ display: 'flex', gap: 18, marginTop: 12, flexWrap: 'wrap' }}>
-              {[['Allegro','var(--pf-allegro)'],['OLX','var(--pf-olx)'],['Otomoto','var(--pf-otomoto)'],['Ovoko','var(--pf-ovoko)']].map(([name, bg]) => (
-                <div key={name} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, color: 'var(--ink-2)' }}>
-                  <span style={{ width: 10, height: 10, borderRadius: 3, background: bg, display: 'inline-block' }} />{name}
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section style={S.panel}>
-          <div style={S.ph}>
-            <h3 style={S.phTitle}>Platformy</h3>
+            <h3 style={S.phTitle}>Platformy sprzedaży</h3>
             <Link to="/platforms" style={{ fontSize: 12, color: 'var(--muted)', fontFamily: 'var(--font-mono)', textDecoration: 'none' }}>Zarządzaj →</Link>
           </div>
           <div>
@@ -175,7 +121,6 @@ export default function DashboardPage() {
             )}
           </div>
         </section>
-      </div>
 
       {/* Recent listings */}
       <section style={S.panel}>
