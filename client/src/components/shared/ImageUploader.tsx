@@ -42,7 +42,7 @@ export function ImageUploader({ files, onChange, maxFiles = 20 }: Props) {
         {...getRootProps()}
         className={cn(
           'border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors',
-          isDragActive ? 'border-primary-500 bg-primary-50' : 'border-gray-300 hover:border-gray-400',
+          isDragActive ? 'border-[var(--navy)] bg-[rgba(22,61,110,0.04)]' : 'border-gray-300 hover:border-gray-400',
           files.length >= maxFiles && 'opacity-50 cursor-not-allowed',
         )}
       >
@@ -66,7 +66,7 @@ export function ImageUploader({ files, onChange, maxFiles = 20 }: Props) {
                 className="w-full h-full object-cover rounded-lg border border-gray-200"
               />
               {i === 0 && (
-                <span className="absolute top-1 left-1 rounded text-xs bg-primary-600 text-white px-1.5 py-0.5">
+                <span className="absolute top-1 left-1 rounded text-xs bg-[var(--navy)] text-white px-1.5 py-0.5">
                   Główne
                 </span>
               )}

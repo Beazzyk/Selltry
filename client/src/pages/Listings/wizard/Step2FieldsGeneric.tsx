@@ -103,7 +103,7 @@ export function Step2FieldsGeneric({ data, onChange }: Props) {
         <div className="flex gap-2 mt-1">
           {CONDITION_OPTIONS.map(({ value, label }) => (
             <button key={value} type="button" onClick={() => onChange({ condition: value as WizardData['condition'] })}
-              className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${data.condition === value ? 'border-primary-500 bg-primary-50 text-primary-700' : 'border-gray-200 hover:bg-gray-50'}`}>
+              className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${data.condition === value ? 'border-[var(--navy)] bg-[rgba(22,61,110,0.06)] text-[var(--navy)]' : 'border-gray-200 hover:bg-[var(--bg-2)]'}`}>
               {label}
             </button>
           ))}
@@ -129,7 +129,7 @@ export function Step2FieldsGeneric({ data, onChange }: Props) {
           <Button type="button" size="sm" variant="outline"
             onClick={() => void generate(data, onChange)}
             disabled={aiLoading}
-            className="gap-1.5 text-primary-600 border-primary-200 hover:bg-primary-50"
+            className="gap-1.5 text-[var(--navy)] border-[var(--border-2)] hover:bg-[var(--bg-2)]"
           >
             {aiLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
             {aiLoading ? 'Generuję...' : 'Generuj z AI'}

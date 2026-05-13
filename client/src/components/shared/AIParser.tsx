@@ -35,10 +35,10 @@ export function AIParser({ onParsed }: Props) {
   }
 
   return (
-    <div className="rounded-xl border border-primary-200 bg-primary-50 p-4">
-      <h3 className="text-sm font-semibold text-primary-900">Szybki opis (AI Parser)</h3>
-      <p className="mb-3 mt-1 text-xs text-primary-700">Wpisz np. "lampa tył samurai prawa 1990".</p>
-      <p className="mb-2 text-xs text-primary-600">
+    <div className="rounded-xl border border-[var(--border-2)] bg-[var(--bg-2)] p-4">
+      <h3 className="text-sm font-semibold text-[var(--ink)]">Szybki opis (AI Parser)</h3>
+      <p className="mb-3 mt-1 text-xs text-[var(--ink-2)]">Wpisz np. "lampa tył samurai prawa 1990".</p>
+      <p className="mb-2 text-xs text-[var(--muted)]">
         {parserMode === 'REGEX'
           ? 'Tryb uproszczony (regex): brak klucza AI, wyniki wymagaja recznej weryfikacji.'
           : 'Parser uzupelnia podstawowe pola na podstawie opisu.'}

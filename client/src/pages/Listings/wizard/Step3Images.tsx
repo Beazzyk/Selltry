@@ -39,7 +39,7 @@ export function Step3Images({ data, onChange, existingImages, onDeleteExisting }
                   </button>
                 )}
                 {img.isMain && (
-                  <span className="absolute top-1 left-1 text-[10px] bg-primary-600 text-white px-1.5 py-0.5 rounded">Główne</span>
+                  <span className="absolute top-1 left-1 text-[10px] bg-[var(--navy)] text-white px-1.5 py-0.5 rounded">Główne</span>
                 )}
               </div>
             ))}

@@ -33,7 +33,7 @@ export function Step2Details({ data, onChange }: Props) {
           {PART_SIDES.map((side) => (
             <button key={side} type="button" onClick={() => onChange({ partSide: side })}
               className={cn('px-4 py-2 rounded-lg border text-sm font-medium transition-colors',
-                data.partSide === side ? 'border-primary-500 bg-primary-50 text-primary-700' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50',
+                data.partSide === side ? 'border-[var(--navy)] bg-[rgba(22,61,110,0.06)] text-[var(--navy)]' : 'border-gray-300 bg-white text-gray-700 hover:bg-[var(--bg-2)]',
               )}>
               {side}
             </button>
@@ -47,9 +47,9 @@ export function Step2Details({ data, onChange }: Props) {
           {CONDITIONS.map(({ value, label, desc }) => (
             <button key={value} type="button" onClick={() => onChange({ condition: value })}
               className={cn('rounded-xl border p-3 text-left transition-colors',
-                data.condition === value ? 'border-primary-500 bg-primary-50' : 'border-gray-200 bg-white hover:bg-gray-50',
+                data.condition === value ? 'border-[var(--navy)] bg-[rgba(22,61,110,0.06)]' : 'border-gray-200 bg-white hover:bg-[var(--bg-2)]',
               )}>
-              <p className={cn('text-sm font-semibold', data.condition === value ? 'text-primary-700' : 'text-gray-900')}>{label}</p>
+              <p className={cn('text-sm font-semibold', data.condition === value ? 'text-[var(--navy)]' : 'text-gray-900')}>{label}</p>
               <p className="text-xs text-gray-500 mt-0.5">{desc}</p>
             </button>
           ))}
@@ -62,7 +62,7 @@ export function Step2Details({ data, onChange }: Props) {
           <textarea id="damage" rows={3} placeholder="Opisz szczegółowo uszkodzenia..."
             value={data.damageDescription ?? ''}
             onChange={(e) => onChange({ damageDescription: e.target.value || undefined })}
-            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--navy)]"
           />
         </div>
       )}
@@ -87,7 +87,7 @@ export function Step2Details({ data, onChange }: Props) {
           <Button type="button" size="sm" variant="outline"
             onClick={() => void generate(data, onChange)}
             disabled={aiLoading}
-            className="gap-1.5 text-primary-600 border-primary-200 hover:bg-primary-50"
+            className="gap-1.5 text-[var(--navy)] border-[var(--border-2)] hover:bg-[var(--bg-2)]"
           >
             {aiLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
             {aiLoading ? 'Generuję...' : 'Generuj z AI'}
@@ -105,7 +105,7 @@ export function Step2Details({ data, onChange }: Props) {
             <textarea id="description" rows={5} placeholder="Opisz część, jej stan, pasujące pojazdy lub wygeneruj AI..."
               value={data.description ?? ''}
               onChange={(e) => onChange({ description: e.target.value || undefined })}
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--navy)]"
             />
             <p className={cn('text-xs mt-1 text-right', (data.description?.length ?? 0) < 10 ? 'text-red-400' : 'text-gray-400')}>
               {data.description?.length ?? 0} znaków

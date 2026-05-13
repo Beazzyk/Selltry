@@ -17,7 +17,7 @@ const CONDITION_LABELS: Record<string, string> = {
 const PLATFORM_COLORS: Record<string, string> = {
   ALLEGRO: 'bg-orange-100 text-orange-700',
   OLX: 'bg-lime-100 text-lime-700',
-  OTOMOTO: 'bg-blue-100 text-blue-700',
+  OTOMOTO: 'bg-[var(--pf-otomoto-bg)] text-[var(--pf-otomoto)]',
   OVOKO: 'bg-emerald-100 text-emerald-700',
 };
 
@@ -45,7 +45,7 @@ export function ListingPreview({ data, onClose }: Props) {
             <div className="flex gap-2 overflow-x-auto pb-1">
               {previewImages.map((url, i) => (
                 <img key={i} src={url} alt={`Zdjęcie ${i + 1}`}
-                  className={`h-40 w-40 flex-shrink-0 rounded-xl object-cover border-2 ${i === 0 ? 'border-primary-400' : 'border-gray-200'}`}
+                  className={`h-40 w-40 flex-shrink-0 rounded-xl object-cover border-2 ${i === 0 ? 'border-[var(--navy)]' : 'border-gray-200'}`}
                 />
               ))}
             </div>
@@ -61,7 +61,7 @@ export function ListingPreview({ data, onClose }: Props) {
             <h1 className="text-2xl font-bold text-gray-900">{data.title || 'Brak tytułu'}</h1>
             <div className="flex items-center gap-4 mt-2">
               {data.basePrice ? (
-                <span className="text-3xl font-bold text-primary-600">
+                <span className="text-3xl font-bold text-[var(--navy)]">
                   {data.basePrice.toFixed(2)} PLN
                 </span>
               ) : (

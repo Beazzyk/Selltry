@@ -20,7 +20,7 @@ export function Navbar({ onOpenMobileMenu }: NavbarProps) {
             <p className="text-sm font-medium text-gray-900">{user.name}</p>
             <p className="text-xs text-gray-500">{user.email}</p>
           </div>
-          <div className="h-8 w-8 rounded-full bg-primary-600 flex items-center justify-center text-white text-sm font-bold">
+          <div className="h-8 w-8 rounded-full bg-[var(--navy)] flex items-center justify-center text-white text-sm font-bold">
             {user.name.charAt(0).toUpperCase()}
           </div>
         </div>

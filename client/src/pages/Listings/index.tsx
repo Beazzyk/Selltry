@@ -110,8 +110,8 @@ export default function ListingsPage() {
               onClick={() => setStatusFilter(value)}
               className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                 statusFilter === value
-                  ? 'bg-primary-600 text-white'
-                  : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                  ? 'bg-[var(--navy)] text-white'
+                  : 'bg-white border border-[var(--border-2)] text-[var(--ink-2)] hover:bg-[var(--bg-2)]'
               }`}
             >
               {label}
@@ -203,7 +203,7 @@ export default function ListingsPage() {
                       <button
                         onClick={() => syncMutation.mutate(listing.id)}
                         disabled={syncMutation.isPending && syncMutation.variables === listing.id}
-                        className="p-1.5 rounded hover:bg-blue-50 text-blue-500 disabled:opacity-50"
+                        className="p-1.5 rounded hover:bg-[var(--bg-2)] text-[var(--navy)] disabled:opacity-50"
                         title="Synchronizuj statusy"
                       >
                         <RefreshCw className={`h-4 w-4 ${syncMutation.isPending && syncMutation.variables === listing.id ? 'animate-spin' : ''}`} />

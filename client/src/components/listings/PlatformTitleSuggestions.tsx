@@ -10,7 +10,7 @@ const PLATFORM_LIMITS: Record<string, number> = {
 const PLATFORM_COLORS: Record<string, string> = {
   ALLEGRO: 'border-orange-200 bg-orange-50 text-orange-800',
   OLX: 'border-lime-200 bg-lime-50 text-lime-800',
-  OTOMOTO: 'border-blue-200 bg-blue-50 text-blue-800',
+  OTOMOTO: 'border-[var(--pf-otomoto)] bg-[var(--pf-otomoto-bg)] text-[var(--pf-otomoto)]',
   OVOKO: 'border-emerald-200 bg-emerald-50 text-emerald-800',
 };
 

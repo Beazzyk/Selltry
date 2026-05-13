@@ -7,7 +7,7 @@ import { WizardData } from './types';
 
 const CATEGORY_TILES: { type: CategoryType; label: string; icon: React.ElementType; color: string }[] = [
   { type: 'AUTOMOTIVE',  label: 'Motoryzacja',   icon: Car,      color: 'border-orange-200 bg-orange-50 hover:bg-orange-100 data-[selected]:bg-orange-100 data-[selected]:border-orange-400' },
-  { type: 'ELECTRONICS', label: 'Elektronika',   icon: Cpu,      color: 'border-blue-200 bg-blue-50 hover:bg-blue-100 data-[selected]:bg-blue-100 data-[selected]:border-blue-400' },
+  { type: 'ELECTRONICS', label: 'Elektronika',   icon: Cpu,      color: 'border-indigo-200 bg-indigo-50 hover:bg-indigo-100 data-[selected]:bg-indigo-100 data-[selected]:border-indigo-400' },
   { type: 'HOME_GARDEN', label: 'Dom i ogród',   icon: Home,     color: 'border-green-200 bg-green-50 hover:bg-green-100 data-[selected]:bg-green-100 data-[selected]:border-green-400' },
   { type: 'FASHION',     label: 'Moda',          icon: Shirt,    color: 'border-pink-200 bg-pink-50 hover:bg-pink-100 data-[selected]:bg-pink-100 data-[selected]:border-pink-400' },
   { type: 'SPORT',       label: 'Sport',         icon: Dumbbell, color: 'border-yellow-200 bg-yellow-50 hover:bg-yellow-100 data-[selected]:bg-yellow-100 data-[selected]:border-yellow-400' },
@@ -68,8 +68,8 @@ export function Step1Category({ data, onChange }: Props) {
                 className={cn(
                   'rounded-lg border px-3 py-2 text-sm text-left transition-colors',
                   data.categoryId === cat.id
-                    ? 'border-primary-500 bg-primary-50 text-primary-700 font-medium'
-                    : 'border-gray-200 bg-white hover:bg-gray-50 text-gray-700',
+                    ? 'border-[var(--navy)] bg-[rgba(22,61,110,0.06)] text-[var(--navy)] font-medium'
+                    : 'border-gray-200 bg-white hover:bg-[var(--bg-2)] text-gray-700',
                 )}
               >
                 {cat.name}

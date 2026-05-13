@@ -24,7 +24,7 @@ type ActivePlatform = Exclude<Platform, 'EBAY'>;
 const PLATFORM_META: Record<ActivePlatform, { label: string; bg: string; initials: string }> = {
   ALLEGRO: { label: 'Allegro', bg: 'bg-orange-500', initials: 'AL' },
   OVOKO: { label: 'Ovoko', bg: 'bg-emerald-600', initials: 'OV' },
-  OTOMOTO: { label: 'Otomoto', bg: 'bg-blue-600', initials: 'OT' },
+  OTOMOTO: { label: 'Otomoto', bg: 'bg-[var(--pf-otomoto)]', initials: 'OT' },
   OLX: { label: 'OLX', bg: 'bg-lime-500', initials: 'OLX' },
 };
 

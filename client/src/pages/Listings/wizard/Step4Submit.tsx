@@ -62,7 +62,7 @@ export function Step4Submit({ data, onChange }: Props) {
       <div className="space-y-2">
         <h4 className="text-sm font-semibold text-gray-700">Platformy publikacji</h4>
         {data.categoryType && data.categoryType !== 'AUTOMOTIVE' && (
-          <p className="text-xs text-blue-600 bg-blue-50 rounded px-3 py-2">
+          <p className="text-xs text-[var(--muted)] bg-[var(--bg-2)] rounded px-3 py-2">
             Otomoto i Ovoko dostępne tylko dla kategorii Motoryzacja.
           </p>
         )}

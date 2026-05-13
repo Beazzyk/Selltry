@@ -118,15 +118,15 @@ export default function NewListingPage() {
           <div key={i} className="flex items-center flex-1">
             <button type="button" onClick={() => i < step && setStep(i)} className="flex flex-col items-center gap-1 flex-1">
               <div className={cn('flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold transition-colors',
-                i < step && 'bg-primary-600 text-white',
-                i === step && 'bg-primary-600 text-white ring-4 ring-primary-100',
+                i < step && 'bg-[var(--navy)] text-white',
+                i === step && 'bg-[var(--navy)] text-white ring-4 ring-[rgba(22,61,110,0.12)]',
                 i > step && 'bg-gray-200 text-gray-500',
               )}>
                 {i < step ? <Check className="h-4 w-4" /> : i + 1}
               </div>
-              <span className={cn('text-xs font-medium hidden sm:block', i === step ? 'text-primary-700' : 'text-gray-500')}>{s.label}</span>
+              <span className={cn('text-xs font-medium hidden sm:block', i === step ? 'text-[var(--navy)]' : 'text-gray-500')}>{s.label}</span>
             </button>
-            {i < STEPS.length - 1 && <div className={cn('h-0.5 flex-1', i < step ? 'bg-primary-600' : 'bg-gray-200')} />}
+            {i < STEPS.length - 1 && <div className={cn('h-0.5 flex-1', i < step ? 'bg-[var(--navy)]' : 'bg-gray-200')} />}
           </div>
         ))}
       </div>

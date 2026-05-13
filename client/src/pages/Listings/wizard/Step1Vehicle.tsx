@@ -108,8 +108,8 @@ export function Step1Vehicle({ data, onChange }: Props) {
               className={cn(
                 'px-4 py-2 rounded-lg border text-sm font-medium transition-colors',
                 data.identMethod === value
-                  ? 'border-primary-500 bg-primary-50 text-primary-700'
-                  : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50',
+                  ? 'border-[var(--navy)] bg-[rgba(22,61,110,0.06)] text-[var(--navy)]'
+                  : 'border-gray-300 bg-white text-gray-700 hover:bg-[var(--bg-2)]',
               )}
             >
               {label}
@@ -157,8 +157,8 @@ export function Step1Vehicle({ data, onChange }: Props) {
               className={cn(
                 'flex flex-col items-center gap-2 rounded-xl border p-4 transition-colors',
                 data.vehicleType === value
-                  ? 'border-primary-500 bg-primary-50 text-primary-700'
-                  : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50',
+                  ? 'border-[var(--navy)] bg-[rgba(22,61,110,0.06)] text-[var(--navy)]'
+                  : 'border-gray-200 bg-white text-gray-700 hover:bg-[var(--bg-2)]',
               )}
             >
               <Icon className="h-6 w-6" />
@@ -204,7 +204,7 @@ export function Step1Vehicle({ data, onChange }: Props) {
                   }}
                   className={cn(
                     'w-full px-4 py-2 text-left text-sm hover:bg-gray-50 transition-colors',
-                    data.vehicleMakeId === make.id && 'bg-primary-50 text-primary-700 font-medium',
+                    data.vehicleMakeId === make.id && 'bg-[rgba(22,61,110,0.06)] text-[var(--navy)] font-medium',
                   )}
                 >
                   {make.name}
@@ -254,7 +254,7 @@ export function Step1Vehicle({ data, onChange }: Props) {
                     }}
                     className={cn(
                       'w-full px-4 py-2 text-left text-sm hover:bg-gray-50 transition-colors',
-                      data.vehicleModelId === model.id && 'bg-primary-50 text-primary-700 font-medium',
+                      data.vehicleModelId === model.id && 'bg-[rgba(22,61,110,0.06)] text-[var(--navy)] font-medium',
                     )}
                   >
                     {model.name}
@@ -278,7 +278,7 @@ export function Step1Vehicle({ data, onChange }: Props) {
               <select
                 value={data.vehicleGenId ?? ''}
                 onChange={(e) => onChange({ vehicleGenId: e.target.value || undefined })}
-                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--navy)]"
               >
                 <option value="">Wybierz generację</option>
                 {generations.map((g) => (

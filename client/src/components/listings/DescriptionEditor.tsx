@@ -71,7 +71,7 @@ export function DescriptionEditor({ value, onChange, onClear }: Props) {
         onInput={handleInput}
         className={cn(
           'listing-preview min-h-[220px] max-h-[420px] overflow-y-auto p-4 text-sm text-gray-800 focus:outline-none',
-          mode === 'edit' && 'cursor-text focus:ring-2 focus:ring-inset focus:ring-primary-300',
+          mode === 'edit' && 'cursor-text focus:ring-2 focus:ring-inset focus:ring-[rgba(22,61,110,0.25)]',
           mode === 'preview' && 'bg-white',
         )}
         // Initial content set via useEffect
