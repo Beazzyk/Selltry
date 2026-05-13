@@ -1,8 +1,19 @@
-import { Platform } from '@prisma/client';
+import { Platform, PlatformStatus } from '@prisma/client';
 import { env } from '../../utils/env';
-import { createImageCollection, createAdvert, buildAdvertPayload } from '../otomoto-api.service';
-import { BasePlatformService, ListingWithRelations, PublishResult } from './base.platform.service';
-import { mockPublish } from './helpers';
+import { createImageCollection, createAdvert, buildAdvertPayload, getAccountAdvert } from '../otomoto-api.service';
+import { toPlainText } from '../../utils/description-converter';
+import { BasePlatformService, ListingWithRelations, PublishResult, SyncStatusResult } from './base.platform.service';
+import { mockPublish, mockSync } from './helpers';
+
+function mapOtomotoStatus(status: string): PlatformStatus {
+  switch (status) {
+    case 'active': return PlatformStatus.ACTIVE;
+    case 'inactive':
+    case 'removed':
+    case 'banned': return PlatformStatus.ENDED;
+    default: return PlatformStatus.PENDING;
+  }
+}
 
 export class OtomotoService extends BasePlatformService {
   platform: Platform = 'OTOMOTO';
@@ -13,18 +24,20 @@ export class OtomotoService extends BasePlatformService {
     return mockPublish(this.platform, 'https://otomoto.pl/oferta');
   }
 
+  protected async _mockSync(externalId: string): Promise<SyncStatusResult> {
+    return mockSync(externalId);
+  }
+
   protected async _realPublish(listing: ListingWithRelations, categoryId: string): Promise<PublishResult> {
-    // 1. Upload zdjęć przez imageCollections API
     let imageCollectionId: string | undefined;
     if (listing.images.length > 0) {
       const s3Keys = listing.images.map((img) => img.s3Key);
       imageCollectionId = await createImageCollection(listing.userId, s3Keys);
     }
 
-    // 2. Buduj i wyślij ogłoszenie
     const payload = buildAdvertPayload({
       title: listing.title,
-      description: listing.description,
+      description: toPlainText(listing.description),
       categoryId,
       condition: listing.condition,
       basePrice: Number(listing.basePrice),
@@ -39,6 +52,14 @@ export class OtomotoService extends BasePlatformService {
       externalId: String(advert.id),
       externalUrl: advert.url ?? `https://otomoto.pl/oferta/${advert.id}`,
       status: 'ACTIVE',
+    };
+  }
+
+  protected async _realSync(externalId: string, userId: string): Promise<SyncStatusResult> {
+    const advert = await getAccountAdvert(userId, externalId);
+    return {
+      status: mapOtomotoStatus(String(advert.status ?? '')),
+      externalUrl: String(advert.url ?? ''),
     };
   }
 }

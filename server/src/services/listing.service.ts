@@ -126,13 +126,14 @@ export async function duplicateListing(userId: string, listingId: string) {
   });
   if (!original) throw new AppError(404, 'Listing not found');
 
-  const { id, createdAt, updatedAt, status, ...rest } = original;
+  const { id, createdAt, updatedAt, status, attributes, ...rest } = original;
 
   const duplicate = await prisma.listing.create({
     data: {
       ...rest,
       title: `${original.title} (kopia)`,
       status: ListingStatus.DRAFT,
+      attributes: (attributes ?? Prisma.JsonNull) as Prisma.InputJsonValue,
       images: {
         create: original.images.map(({ id: _id, listingId: _lid, ...img }) => img),
       },
@@ -140,7 +141,7 @@ export async function duplicateListing(userId: string, listingId: string) {
     include: LISTING_WITH_RELATIONS,
   });
 
-  return enrichListing(duplicate);
+  return enrichListing(duplicate as Parameters<typeof enrichListing>[0]);
 }
 
 async function enrichListing<T extends { images: { s3Key: string }[] }>(listing: T) {

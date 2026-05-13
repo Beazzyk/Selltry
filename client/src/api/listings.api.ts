@@ -21,6 +21,7 @@ export interface CreateListingData {
   partDetails?: string;
   damageDescription?: string;
   rawUserInput?: string;
+  attributes?: Record<string, string | number | undefined>;
 }
 
 export interface ListingsResponse {
@@ -73,4 +74,41 @@ export async function uploadImages(listingId: string, files: File[]): Promise<vo
 
 export async function deleteImage(listingId: string, imageId: string): Promise<void> {
   await apiClient.delete(`/listings/${listingId}/images/${imageId}`);
+}
+
+export interface PlatformSyncResult {
+  platform: string;
+  status: string;
+  synced: boolean;
+  error?: string;
+}
+
+export interface GenerateDescriptionInput {
+  categoryType: string;
+  categoryName?: string;
+  brand?: string;
+  productModel?: string;
+  condition: string;
+  title: string;
+  partSide?: string;
+  vehicleMake?: string;
+  vehicleModel?: string;
+  vehicleYear?: number;
+  attributes?: Record<string, unknown>;
+}
+
+export interface GenerateResult {
+  title: string;
+  platformTitles: Record<string, string>;
+  description: string;
+}
+
+export async function generateDescription(input: GenerateDescriptionInput): Promise<GenerateResult> {
+  const { data } = await apiClient.post<GenerateResult>('/listings/generate-description', input);
+  return data;
+}
+
+export async function syncListingStatus(listingId: string): Promise<{ results: PlatformSyncResult[] }> {
+  const { data } = await apiClient.post<{ results: PlatformSyncResult[] }>(`/listings/${listingId}/sync`);
+  return data;
 }

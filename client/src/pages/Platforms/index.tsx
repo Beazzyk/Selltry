@@ -7,7 +7,6 @@ import {
   connectOtomoto,
   disconnectPlatform,
   getAllegroOAuthStart,
-  getEbayOAuthStart,
   getOlxOAuthStart,
   getPlatforms,
   testPlatform,
@@ -20,16 +19,17 @@ import { PlatformDiagnosticsPanel } from '@/components/platforms/PlatformDiagnos
 import { usePlatformDiagnostics } from '@/hooks/usePlatformDiagnostics';
 import { getRequestErrorMessage } from '@/lib/errors';
 
-const PLATFORM_META: Record<Platform, { label: string; bg: string; initials: string }> = {
+type ActivePlatform = Exclude<Platform, 'EBAY'>;
+
+const PLATFORM_META: Record<ActivePlatform, { label: string; bg: string; initials: string }> = {
   ALLEGRO: { label: 'Allegro', bg: 'bg-orange-500', initials: 'AL' },
   OVOKO: { label: 'Ovoko', bg: 'bg-emerald-600', initials: 'OV' },
-  OTOMOTO: { label: 'Otomoto', bg: 'bg-blue-600', initials: 'OT' },
+  OTOMOTO: { label: 'Otomoto', bg: 'bg-[var(--pf-otomoto)]', initials: 'OT' },
   OLX: { label: 'OLX', bg: 'bg-lime-500', initials: 'OLX' },
-  EBAY: { label: 'eBay', bg: 'bg-yellow-400', initials: 'eB' },
 };
 
-const PLATFORMS: Platform[] = ['ALLEGRO', 'OVOKO', 'OTOMOTO', 'OLX', 'EBAY'];
-const OAUTH_PLATFORMS: Platform[] = ['ALLEGRO', 'OLX', 'EBAY'];
+const PLATFORMS: ActivePlatform[] = ['ALLEGRO', 'OVOKO', 'OTOMOTO', 'OLX'];
+const OAUTH_PLATFORMS: ActivePlatform[] = ['ALLEGRO', 'OLX'];
 
 function openOAuthPopup(): Window | null {
   const w = 600, h = 700;
@@ -105,10 +105,6 @@ export default function PlatformsPage() {
           queryClient.invalidateQueries({ queryKey: ['platforms'] });
           toast('OLX połączona (MOCK)', 'success');
         }
-      } else if (platform === 'EBAY') {
-        const { authorizationUrl } = await getEbayOAuthStart();
-        if (popup) popup.location.href = authorizationUrl;
-        else window.location.href = authorizationUrl;
       }
     } catch (error) {
       popup?.close();
@@ -116,7 +112,7 @@ export default function PlatformsPage() {
     }
   }
 
-  function handleConnect(platform: Platform) {
+  function handleConnect(platform: ActivePlatform) {
     if (OAUTH_PLATFORMS.includes(platform)) {
       setOauthPlatform(platform);
       return;

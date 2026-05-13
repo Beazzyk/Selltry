@@ -3,7 +3,7 @@ import { ListingStatus } from '@/types';
 
 const STATUS_CONFIG: Record<ListingStatus, { label: string; className: string }> = {
   DRAFT: { label: 'Szkic', className: 'bg-gray-100 text-gray-700' },
-  PUBLISHING: { label: 'Wystawianie...', className: 'bg-blue-100 text-blue-700' },
+  PUBLISHING: { label: 'Wystawianie...', className: 'bg-[var(--bg-2)] text-[var(--navy)]' },
   ACTIVE: { label: 'Aktywne', className: 'bg-green-100 text-green-700' },
   PARTIALLY_ACTIVE: { label: 'Częściowo aktywne', className: 'bg-yellow-100 text-yellow-700' },
   ENDED: { label: 'Zakończone', className: 'bg-gray-100 text-gray-500' },

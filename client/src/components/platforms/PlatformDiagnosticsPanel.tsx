@@ -9,7 +9,6 @@ interface Props {
 
 export function PlatformDiagnosticsPanel({ platform, diagnostics }: Props) {
   const { olxDeliveryMut, olxAdvertsMut, olxCategoryAttrsMut } = diagnostics;
-  const { ebayFulfillmentMut, ebayPaymentMut, ebayReturnMut, ebayOffersMut } = diagnostics;
   const { otomotoCategoryMut, otomotoAdvertsMut } = diagnostics;
 
   if (platform === 'OLX') {
@@ -23,25 +22,6 @@ export function PlatformDiagnosticsPanel({ platform, diagnostics }: Props) {
         </Button>
         <Button size="sm" variant="outline" className="w-full text-xs" onClick={() => olxAdvertsMut.mutate()} disabled={olxAdvertsMut.isPending}>
           {olxAdvertsMut.isPending ? 'Pobieram adverts...' : 'OLX Adverts'}
-        </Button>
-      </>
-    );
-  }
-
-  if (platform === 'EBAY') {
-    return (
-      <>
-        <Button size="sm" variant="outline" className="w-full text-xs" onClick={() => ebayFulfillmentMut.mutate()} disabled={ebayFulfillmentMut.isPending}>
-          {ebayFulfillmentMut.isPending ? 'Pobieram fulfillment...' : 'eBay Fulfillment'}
-        </Button>
-        <Button size="sm" variant="outline" className="w-full text-xs" onClick={() => ebayPaymentMut.mutate()} disabled={ebayPaymentMut.isPending}>
-          {ebayPaymentMut.isPending ? 'Pobieram payment...' : 'eBay Payment'}
-        </Button>
-        <Button size="sm" variant="outline" className="w-full text-xs" onClick={() => ebayReturnMut.mutate()} disabled={ebayReturnMut.isPending}>
-          {ebayReturnMut.isPending ? 'Pobieram return...' : 'eBay Return'}
-        </Button>
-        <Button size="sm" variant="outline" className="w-full text-xs" onClick={() => ebayOffersMut.mutate()} disabled={ebayOffersMut.isPending}>
-          {ebayOffersMut.isPending ? 'Pobieram offers...' : 'eBay Offers'}
         </Button>
       </>
     );

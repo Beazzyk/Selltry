@@ -65,6 +65,14 @@ export async function getCategoryAttributes(
   return olxRequest<OlxCategoryAttributesResponse>(token, 'GET', `/categories/${encodeURIComponent(categoryId)}/attributes`);
 }
 
+export async function getAdvert(
+  userId: string,
+  advertId: string,
+): Promise<{ status?: unknown; url?: unknown }> {
+  const token = await getValidAccessToken(userId);
+  return olxRequest<{ status?: unknown; url?: unknown }>(token, 'GET', `/adverts/${encodeURIComponent(advertId)}`);
+}
+
 export async function getAdverts(userId: string): Promise<OlxAdvertsResponse> {
   const token = await getValidAccessToken(userId);
   return olxRequest<OlxAdvertsResponse>(token, 'GET', '/adverts');
@@ -84,7 +92,7 @@ export function buildAdvertPayload(params: {
     description: params.description,
     category_id: Number(params.categoryId),
     advertiser_type: 'business',
-    contact: { name: 'AutoLister' },
+    contact: { name: 'Selltry' },
     attributes: [
       { code: 'price', value: String(params.basePrice) },
       { code: 'price_type', value: 'fixed' },

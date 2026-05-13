@@ -67,6 +67,16 @@ export async function getCategory(userId: string, categoryId: string): Promise<O
   return otomotoRequest<OtomotoCategoryResponse>(token, 'GET', `/categories/${encodeURIComponent(categoryId)}`);
 }
 
+export async function getAccountAdvert(
+  userId: string,
+  advertId: string,
+): Promise<{ id?: unknown; status?: unknown; url?: unknown }> {
+  const token = await getValidAccessToken(userId);
+  return otomotoRequest<{ id?: unknown; status?: unknown; url?: unknown }>(
+    token, 'GET', `/account/adverts/${encodeURIComponent(advertId)}`,
+  );
+}
+
 export async function getAccountAdverts(userId: string): Promise<OtomotoAdvertsResponse> {
   const token = await getValidAccessToken(userId);
   return otomotoRequest<OtomotoAdvertsResponse>(token, 'GET', '/account/adverts');

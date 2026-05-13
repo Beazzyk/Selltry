@@ -7,6 +7,8 @@ const router = Router();
 router.use(authMiddleware);
 
 router.get('/categories', ctrl.getCategories);
+router.get('/category-types', ctrl.getCategoryTypes);
+router.get('/brands', ctrl.getBrands);
 router.get('/vehicles/makes', ctrl.getVehicleMakes);
 router.get('/vehicles/makes/:makeId/models', ctrl.getVehicleModels);
 router.get('/vehicles/models/:modelId/generations', ctrl.getVehicleGenerations);

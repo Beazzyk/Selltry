@@ -5,7 +5,11 @@ export interface DashboardStats {
   totalListings: number;
   activeListings: number;
   draftListings: number;
+  errorListings: number;
+  endedListings: number;
   listingsByPlatform: { platform: Platform; active: number }[];
+  connectedPlatforms: Platform[];
+  attentionListings: Listing[];
   recentListings: Listing[];
 }
 

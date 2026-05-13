@@ -1,9 +1,18 @@
-import { Platform, VehicleType } from '@prisma/client';
+import { CategoryType, Platform, VehicleType } from '@prisma/client';
+
+export async function getBrands(type: CategoryType) {
+  return prisma.brand.findMany({
+    where: { categoryTypes: { has: type } },
+    orderBy: { name: 'asc' },
+    select: { id: true, name: true },
+  });
+}
 import { AppError } from '../middleware/error.middleware';
 import { prisma } from '../utils/prisma';
 
-export async function getCategoryTree() {
+export async function getCategoryTree(type?: CategoryType) {
   const all = await prisma.internalCategory.findMany({
+    where: type ? { categoryType: type } : undefined,
     orderBy: { name: 'asc' },
   });
 
@@ -12,6 +21,16 @@ export async function getCategoryTree() {
     ...root,
     children: all.filter((c) => c.parentId === root.id),
   }));
+}
+
+export async function getCategoryTypes() {
+  const groups = await prisma.internalCategory.groupBy({
+    by: ['categoryType'],
+    where: { parentId: null },
+    _count: { id: true },
+    orderBy: { categoryType: 'asc' },
+  });
+  return groups.map((g) => ({ type: g.categoryType, count: g._count.id }));
 }
 
 export async function getVehicleMakes(type?: string) {

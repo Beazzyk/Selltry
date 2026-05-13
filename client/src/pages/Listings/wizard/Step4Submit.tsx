@@ -1,12 +1,9 @@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { WizardData } from './types';
-import { Platform } from '@/types';
+import { WizardData, getPlatformsForCategory } from './types';
 import { useQuery } from '@tanstack/react-query';
 import { getPlatforms } from '@/api/platforms.api';
 import { getMarginRules } from '@/api/margins.api';
-
-const PLATFORMS: Platform[] = ['ALLEGRO', 'OVOKO', 'OTOMOTO', 'OLX', 'EBAY'];
 
 interface Props {
   data: WizardData;
@@ -17,7 +14,10 @@ export function Step4Submit({ data, onChange }: Props) {
   const { data: platforms = [] } = useQuery({ queryKey: ['platforms'], queryFn: getPlatforms });
   const { data: margins = [] } = useQuery({ queryKey: ['margins'], queryFn: getMarginRules });
 
-  const activePlatforms = new Set(platforms.filter((platform) => platform.isActive).map((platform) => platform.platform));
+  const allowedPlatforms = getPlatformsForCategory(data.categoryType);
+  const activePlatforms = new Set(
+    platforms.filter((p) => p.isActive && allowedPlatforms.includes(p.platform as typeof allowedPlatforms[number])).map((p) => p.platform),
+  );
 
   return (
     <div className="space-y-6">
@@ -61,8 +61,13 @@ export function Step4Submit({ data, onChange }: Props) {
 
       <div className="space-y-2">
         <h4 className="text-sm font-semibold text-gray-700">Platformy publikacji</h4>
+        {data.categoryType && data.categoryType !== 'AUTOMOTIVE' && (
+          <p className="text-xs text-[var(--muted)] bg-[var(--bg-2)] rounded px-3 py-2">
+            Otomoto i Ovoko dostępne tylko dla kategorii Motoryzacja.
+          </p>
+        )}
         <div className="grid grid-cols-2 gap-2">
-          {PLATFORMS.map((platform) => {
+          {allowedPlatforms.map((platform) => {
             const active = activePlatforms.has(platform);
             const selected = data.selectedPlatforms.includes(platform);
             return (
