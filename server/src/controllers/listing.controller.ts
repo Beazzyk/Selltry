@@ -228,7 +228,7 @@ export async function syncStatus(req: Request, res: Response, next: NextFunction
 export async function getDashboardStats(req: Request, res: Response, next: NextFunction) {
   try {
     const uid = userId(req);
-    const [totalListings, activeListings, draftListings, errorListings, endedListings, recentListings, byPlatform, connectedPlatforms] = await Promise.all([
+    const [totalListings, activeListings, draftListings, errorListings, endedListings, recentListings, attentionListings, byPlatform, connectedPlatforms] = await Promise.all([
       prisma.listing.count({ where: { userId: uid } }),
       prisma.listing.count({ where: { userId: uid, status: ListingStatus.ACTIVE } }),
       prisma.listing.count({ where: { userId: uid, status: ListingStatus.DRAFT } }),
@@ -239,6 +239,12 @@ export async function getDashboardStats(req: Request, res: Response, next: NextF
         orderBy: { createdAt: 'desc' },
         take: 5,
         include: { images: { take: 1, orderBy: { order: 'asc' } }, platformListings: { select: { platform: true, status: true } } },
+      }),
+      prisma.listing.findMany({
+        where: { userId: uid, status: { in: [ListingStatus.ERROR, ListingStatus.ENDED, ListingStatus.PARTIALLY_ACTIVE] } },
+        orderBy: { updatedAt: 'desc' },
+        take: 5,
+        include: { images: { take: 1, orderBy: { order: 'asc' } }, platformListings: { select: { platform: true, status: true, errorMessage: true } } },
       }),
       prisma.platformListing.groupBy({
         by: ['platform'],
@@ -259,6 +265,7 @@ export async function getDashboardStats(req: Request, res: Response, next: NextF
       endedListings,
       listingsByPlatform: byPlatform.map((item) => ({ platform: item.platform, active: item._count._all })),
       connectedPlatforms: connectedPlatforms.map((p) => p.platform),
+      attentionListings,
       recentListings,
     });
   } catch (err) {

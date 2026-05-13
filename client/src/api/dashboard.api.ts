@@ -9,6 +9,7 @@ export interface DashboardStats {
   endedListings: number;
   listingsByPlatform: { platform: Platform; active: number }[];
   connectedPlatforms: Platform[];
+  attentionListings: Listing[];
   recentListings: Listing[];
 }
 
