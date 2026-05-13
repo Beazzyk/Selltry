@@ -6,10 +6,8 @@ import { SelltryLogo } from '@/pages/Landing/SelltryLogo';
 const MAIN_NAV = [
   { to: '/dashboard', label: 'Dashboard',
     icon: <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="16" height="16"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg> },
-  { to: '/listings', label: 'Ogłoszenia', count: true,
+  { to: '/listings', label: 'Ogłoszenia',
     icon: <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="16" height="16"><path d="M2 4h12M2 8h12M2 12h8"/></svg> },
-  { to: '/listings/new', label: 'Nowe ogłoszenie',
-    icon: <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="16" height="16"><path d="M8 2v12M2 8h12"/></svg> },
   { to: '/orders', label: 'Zamówienia',
     icon: <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="16" height="16"><path d="M2 5h12l-1 9H3z"/><path d="M5 5V3a3 3 0 0 1 6 0v2"/></svg> },
 ];
