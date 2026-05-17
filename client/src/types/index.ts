@@ -87,6 +87,7 @@ export interface Listing {
   partDetails?: string;
   damageDescription?: string;
   attributes?: Record<string, unknown>;
+  platformCategories?: Record<string, string>;
   status: ListingStatus;
   createdAt: string;
   updatedAt: string;

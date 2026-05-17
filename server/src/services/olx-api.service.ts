@@ -106,6 +106,56 @@ export async function getImagePresignedUrls(s3Keys: string[]): Promise<string[]>
   return Promise.all(s3Keys.map((key) => getPresignedUrl(key)));
 }
 
+interface OlxCategoryItem {
+  id: number | string;
+  name: string;
+  parent_id?: number | string | null;
+  children?: OlxCategoryItem[];
+}
+
+interface OlxCategoriesResponse {
+  data?: OlxCategoryItem[];
+  [key: string]: unknown;
+}
+
+export interface RawPlatformCategory {
+  externalId: string;
+  parentExternalId: string | null;
+  name: string;
+  isLeaf: boolean;
+  depth: number;
+}
+
+export async function fetchAllOlxCategories(userId: string): Promise<RawPlatformCategory[]> {
+  const token = await getValidAccessToken(userId);
+  const response = await olxRequest<OlxCategoriesResponse>(token, 'GET', '/categories');
+  const items = response.data ?? [];
+  return flattenOlxCategories(items);
+}
+
+function flattenOlxCategories(
+  items: OlxCategoryItem[],
+  parentId: string | null = null,
+  depth = 0,
+): RawPlatformCategory[] {
+  const result: RawPlatformCategory[] = [];
+  for (const item of items) {
+    const externalId = String(item.id);
+    const children = item.children ?? [];
+    result.push({
+      externalId,
+      parentExternalId: parentId,
+      name: item.name,
+      isLeaf: children.length === 0,
+      depth,
+    });
+    if (children.length > 0) {
+      result.push(...flattenOlxCategories(children, externalId, depth + 1));
+    }
+  }
+  return result;
+}
+
 async function olxRequest<T>(
   token: string,
   method: 'GET' | 'POST' | 'PUT' | 'DELETE',

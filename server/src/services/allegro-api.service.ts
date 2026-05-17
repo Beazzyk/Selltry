@@ -4,6 +4,7 @@ import { AppError } from '../middleware/error.middleware';
 import { prisma } from '../utils/prisma';
 import { env } from '../utils/env';
 import { getValidAccessToken } from './allegro-oauth.service';
+import { getAllegroAppToken } from './allegro-app-token.service';
 
 interface AllegroMeResponse {
   id: string;
@@ -192,4 +193,76 @@ async function requestWithRetry<T>(url: string, token: string): Promise<AllegroR
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+export interface RawPlatformCategory {
+  externalId: string;
+  parentExternalId: string | null;
+  name: string;
+  isLeaf: boolean;
+  depth: number;
+}
+
+const MAX_DEPTH = 5;
+
+export async function fetchAllAllegroCategories(userId: string): Promise<RawPlatformCategory[]> {
+  const accumulated: RawPlatformCategory[] = [];
+  await fetchAllegroLevel(userId, undefined, 0, accumulated);
+  return accumulated;
+}
+
+// Używa tokenu aplikacji (client_credentials) — nie wymaga usera
+export async function fetchAllAllegroCategoriesAsApp(): Promise<RawPlatformCategory[]> {
+  const accumulated: RawPlatformCategory[] = [];
+  await fetchAllegroLevelWithToken(
+    () => getAllegroAppToken(),
+    undefined,
+    0,
+    accumulated,
+  );
+  return accumulated;
+}
+
+async function fetchAllegroLevel(
+  userId: string,
+  parentId: string | undefined,
+  depth: number,
+  acc: RawPlatformCategory[],
+): Promise<void> {
+  await fetchAllegroLevelWithToken(
+    () => getAllegroToken(userId),
+    parentId,
+    depth,
+    acc,
+  );
+}
+
+async function fetchAllegroLevelWithToken(
+  getToken: () => Promise<string>,
+  parentId: string | undefined,
+  depth: number,
+  acc: RawPlatformCategory[],
+): Promise<void> {
+  if (depth > MAX_DEPTH) return;
+
+  const token = await getToken();
+  const query = parentId ? `?parent.id=${encodeURIComponent(parentId)}` : '';
+  const url = `${ALLEGRO_BASE_URL}/sale/categories${query}`;
+  const result = await requestWithRetry<AllegroCategoryResponse>(url, token);
+  const cats = result.data.categories ?? [];
+
+  for (const cat of cats) {
+    acc.push({
+      externalId: cat.id,
+      parentExternalId: parentId ?? null,
+      name: cat.name,
+      isLeaf: cat.leaf,
+      depth,
+    });
+
+    if (!cat.leaf && depth < MAX_DEPTH) {
+      await sleep(60); // respektuj rate limit Allegro API
+      await fetchAllegroLevelWithToken(getToken, cat.id, depth + 1, acc);
+    }
+  }
 }

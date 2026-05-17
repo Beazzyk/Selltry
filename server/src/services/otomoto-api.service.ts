@@ -112,6 +112,55 @@ async function otomotoRequest<T>(
   }
 }
 
+interface OtomotoCategoryListItem {
+  id: string | number;
+  name: string;
+  children?: OtomotoCategoryListItem[];
+}
+
+interface OtomotoCategoryListResponse {
+  data?: OtomotoCategoryListItem[];
+  [key: string]: unknown;
+}
+
+export interface RawPlatformCategory {
+  externalId: string;
+  parentExternalId: string | null;
+  name: string;
+  isLeaf: boolean;
+  depth: number;
+}
+
+export async function fetchAllOtomotoCategories(userId: string): Promise<RawPlatformCategory[]> {
+  const token = await getValidAccessToken(userId);
+  const response = await otomotoRequest<OtomotoCategoryListResponse>(token, 'GET', '/categories', undefined);
+  const items = response.data ?? [];
+  return flattenOtomotoCategories(items);
+}
+
+function flattenOtomotoCategories(
+  items: OtomotoCategoryListItem[],
+  parentId: string | null = null,
+  depth = 0,
+): RawPlatformCategory[] {
+  const result: RawPlatformCategory[] = [];
+  for (const item of items) {
+    const externalId = String(item.id);
+    const children = item.children ?? [];
+    result.push({
+      externalId,
+      parentExternalId: parentId,
+      name: item.name,
+      isLeaf: children.length === 0,
+      depth,
+    });
+    if (children.length > 0) {
+      result.push(...flattenOtomotoCategories(children, externalId, depth + 1));
+    }
+  }
+  return result;
+}
+
 export function buildAdvertPayload(params: {
   title: string;
   description: string;

@@ -30,6 +30,7 @@ const createSchema = z.object({
   partDetails: z.string().optional(),
   damageDescription: z.string().optional(),
   rawUserInput: z.string().optional(),
+  platformCategories: z.record(z.string(), z.string()).optional(),
 });
 
 const filterSchema = z.object({

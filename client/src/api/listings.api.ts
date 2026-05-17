@@ -22,6 +22,7 @@ export interface CreateListingData {
   damageDescription?: string;
   rawUserInput?: string;
   attributes?: Record<string, string | number | undefined>;
+  platformCategories?: Record<string, string>;
 }
 
 export interface ListingsResponse {

@@ -4,6 +4,9 @@ import { WizardData, getPlatformsForCategory } from './types';
 import { useQuery } from '@tanstack/react-query';
 import { getPlatforms } from '@/api/platforms.api';
 import { getMarginRules } from '@/api/margins.api';
+import { PlatformCategoryPicker } from './PlatformCategoryPicker';
+
+const CATEGORY_SYNC_PLATFORMS = ['ALLEGRO', 'OLX', 'OTOMOTO'];
 
 interface Props {
   data: WizardData;
@@ -91,6 +94,32 @@ export function Step4Submit({ data, onChange }: Props) {
         </div>
       </div>
 
+      {data.selectedPlatforms.filter((p) => CATEGORY_SYNC_PLATFORMS.includes(p)).length > 0 && (
+        <div className="space-y-3">
+          <h4 className="text-sm font-semibold text-gray-700">Kategorie na platformach</h4>
+          <p className="text-xs text-gray-500">
+            Wybierz kategorię na każdej platformie — bez tego ogłoszenie nie zostanie wystawione.
+          </p>
+          {data.selectedPlatforms
+            .filter((p) => CATEGORY_SYNC_PLATFORMS.includes(p))
+            .map((platform) => (
+              <PlatformCategoryPicker
+                key={platform}
+                platform={platform}
+                selectedExternalId={data.platformCategories[platform]}
+                onSelect={(externalId) =>
+                  onChange({ platformCategories: { ...data.platformCategories, [platform]: externalId } })
+                }
+                onClear={() => {
+                  const next = { ...data.platformCategories };
+                  delete next[platform];
+                  onChange({ platformCategories: next });
+                }}
+              />
+            ))}
+        </div>
+      )}
+
       {/* Podsumowanie */}
       <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 space-y-2">
         <h4 className="text-sm font-semibold text-gray-700">Podsumowanie ogłoszenia</h4>
@@ -109,7 +138,9 @@ export function Step4Submit({ data, onChange }: Props) {
       </div>
 
       <p className="text-xs text-gray-400">
-        Ogłoszenie zostanie zapisane jako szkic. Wystawianie na platformy będzie dostępne po połączeniu platform w zakładce Platformy.
+        {data.selectedPlatforms.length > 0
+          ? 'Kliknij „Wystawiaj" — ogłoszenie trafi do kolejki publikacji na wybranych platformach.'
+          : 'Nie wybrałeś platform — ogłoszenie zostanie zapisane jako szkic. Możesz je wystawić później z listy ogłoszeń.'}
       </p>
 
       {data.basePrice && data.selectedPlatforms.length > 0 && (
