@@ -5,6 +5,7 @@ import { prisma } from '../utils/prisma';
 import { env } from '../utils/env';
 import { getValidAccessToken } from './allegro-oauth.service';
 import { getAllegroAppToken } from './allegro-app-token.service';
+import { RawPlatformCategory } from '../types/platform.types';
 
 interface AllegroMeResponse {
   id: string;
@@ -195,21 +196,7 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export interface RawPlatformCategory {
-  externalId: string;
-  parentExternalId: string | null;
-  name: string;
-  isLeaf: boolean;
-  depth: number;
-}
-
 const MAX_DEPTH = 5;
-
-export async function fetchAllAllegroCategories(userId: string): Promise<RawPlatformCategory[]> {
-  const accumulated: RawPlatformCategory[] = [];
-  await fetchAllegroLevel(userId, undefined, 0, accumulated);
-  return accumulated;
-}
 
 // Używa tokenu aplikacji (client_credentials) — nie wymaga usera
 export async function fetchAllAllegroCategoriesAsApp(): Promise<RawPlatformCategory[]> {
@@ -221,20 +208,6 @@ export async function fetchAllAllegroCategoriesAsApp(): Promise<RawPlatformCateg
     accumulated,
   );
   return accumulated;
-}
-
-async function fetchAllegroLevel(
-  userId: string,
-  parentId: string | undefined,
-  depth: number,
-  acc: RawPlatformCategory[],
-): Promise<void> {
-  await fetchAllegroLevelWithToken(
-    () => getAllegroToken(userId),
-    parentId,
-    depth,
-    acc,
-  );
 }
 
 async function fetchAllegroLevelWithToken(

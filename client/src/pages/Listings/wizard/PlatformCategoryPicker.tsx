@@ -7,6 +7,7 @@ import {
   getPlatformCategoryBreadcrumb,
   PlatformCategoryNode,
 } from '@/api/categories.api';
+import { useDebounce } from '@/hooks/useDebounce';
 import { cn } from '@/lib/utils';
 
 const PLATFORM_LABEL: Record<string, string> = {
@@ -18,7 +19,7 @@ const PLATFORM_LABEL: Record<string, string> = {
 interface Props {
   platform: string;
   selectedExternalId?: string;
-  onSelect: (externalId: string, name: string) => void;
+  onSelect: (externalId: string) => void;
   onClear: () => void;
 }
 
@@ -27,6 +28,7 @@ export function PlatformCategoryPicker({ platform, selectedExternalId, onSelect,
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const label = PLATFORM_LABEL[platform] ?? platform;
+  const debouncedQuery = useDebounce(query, 300);
 
   const { data: syncStatus } = useQuery({
     queryKey: ['platform-sync-status', platform],
@@ -35,9 +37,9 @@ export function PlatformCategoryPicker({ platform, selectedExternalId, onSelect,
   });
 
   const { data: results = [], isFetching } = useQuery({
-    queryKey: ['platform-category-search', platform, query],
-    queryFn: () => searchPlatformCategories(platform, query),
-    enabled: query.length >= 2,
+    queryKey: ['platform-category-search', platform, debouncedQuery],
+    queryFn: () => searchPlatformCategories(platform, debouncedQuery),
+    enabled: debouncedQuery.length >= 2,
     staleTime: 30_000,
   });
 
@@ -61,7 +63,7 @@ export function PlatformCategoryPicker({ platform, selectedExternalId, onSelect,
   const noCategories = syncStatus && syncStatus.supported && syncStatus.count === 0;
 
   function handleSelect(node: PlatformCategoryNode) {
-    onSelect(node.externalId, node.name);
+    onSelect(node.externalId);
     setQuery('');
     setOpen(false);
   }
@@ -132,7 +134,7 @@ export function PlatformCategoryPicker({ platform, selectedExternalId, onSelect,
             )}
           </div>
 
-          {open && query.length >= 2 && (
+          {open && debouncedQuery.length >= 2 && (
             <div className="absolute z-50 mt-1 max-h-56 w-full overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg">
               {results.length === 0 && !isFetching ? (
                 <p className="px-4 py-3 text-xs text-gray-500">Brak wyników dla &ldquo;{query}&rdquo;</p>

@@ -2,6 +2,8 @@ import axios, { AxiosError } from 'axios';
 import { AppError } from '../middleware/error.middleware';
 import { getPresignedUrl } from './image.service';
 import { getValidAccessToken } from './olx-oauth.service';
+import { RawPlatformCategory } from '../types/platform.types';
+import { flattenCategoryTree } from '../utils/category.utils';
 
 const BASE_URL = 'https://www.olx.pl/api/open';
 
@@ -118,42 +120,10 @@ interface OlxCategoriesResponse {
   [key: string]: unknown;
 }
 
-export interface RawPlatformCategory {
-  externalId: string;
-  parentExternalId: string | null;
-  name: string;
-  isLeaf: boolean;
-  depth: number;
-}
-
 export async function fetchAllOlxCategories(userId: string): Promise<RawPlatformCategory[]> {
   const token = await getValidAccessToken(userId);
   const response = await olxRequest<OlxCategoriesResponse>(token, 'GET', '/categories');
-  const items = response.data ?? [];
-  return flattenOlxCategories(items);
-}
-
-function flattenOlxCategories(
-  items: OlxCategoryItem[],
-  parentId: string | null = null,
-  depth = 0,
-): RawPlatformCategory[] {
-  const result: RawPlatformCategory[] = [];
-  for (const item of items) {
-    const externalId = String(item.id);
-    const children = item.children ?? [];
-    result.push({
-      externalId,
-      parentExternalId: parentId,
-      name: item.name,
-      isLeaf: children.length === 0,
-      depth,
-    });
-    if (children.length > 0) {
-      result.push(...flattenOlxCategories(children, externalId, depth + 1));
-    }
-  }
-  return result;
+  return flattenCategoryTree(response.data ?? []);
 }
 
 async function olxRequest<T>(

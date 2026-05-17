@@ -1,3 +1,4 @@
+.mcp.json
 node_modules/
 dist/
 build/
@@ -9,5 +10,3 @@ build/
 Thumbs.db
 coverage/
 .nyc_output/
-server/prisma/migrations/*
-!server/prisma/migrations/.gitkeep

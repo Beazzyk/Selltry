@@ -15,6 +15,7 @@ import { Step3Images } from './wizard/Step3Images';
 import { Step4Submit } from './wizard/Step4Submit';
 import { WizardData, WIZARD_DEFAULTS } from './wizard/types';
 import { ListingPreview } from '@/components/listings/ListingPreview';
+import { CATEGORY_SYNC_PLATFORMS } from '@/constants';
 
 const STEPS_AUTO = [
   { label: 'Kategoria', desc: 'Wybierz kategorię' },
@@ -47,11 +48,9 @@ export default function NewListingPage() {
     setData((prev) => ({ ...prev, ...update }));
   }
 
-  const CATEGORY_REQUIRED_PLATFORMS = ['ALLEGRO', 'OLX', 'OTOMOTO'];
-
   function platformCategoriesValid(): boolean {
     return data.selectedPlatforms
-      .filter((p) => CATEGORY_REQUIRED_PLATFORMS.includes(p))
+      .filter((p) => CATEGORY_SYNC_PLATFORMS.includes(p))
       .every((p) => !!data.platformCategories[p]);
   }
 

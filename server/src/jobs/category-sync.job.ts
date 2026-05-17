@@ -27,7 +27,7 @@ export async function enqueueCategorySync(data: CategorySyncJobData): Promise<{ 
     removeOnFail: { count: 10 },
     jobId: `${data.platform}-${data.userId}`, // deduplikacja — jeden job per user/platforma
   });
-  return { jobId: job.id! };
+  return { jobId: job.id as string };
 }
 
 export async function getCategorySyncJobStatus(jobId: string): Promise<{

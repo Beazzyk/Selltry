@@ -5,8 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getPlatforms } from '@/api/platforms.api';
 import { getMarginRules } from '@/api/margins.api';
 import { PlatformCategoryPicker } from './PlatformCategoryPicker';
-
-const CATEGORY_SYNC_PLATFORMS = ['ALLEGRO', 'OLX', 'OTOMOTO'];
+import { CATEGORY_SYNC_PLATFORMS } from '@/constants';
 
 interface Props {
   data: WizardData;
@@ -21,6 +20,7 @@ export function Step4Submit({ data, onChange }: Props) {
   const activePlatforms = new Set(
     platforms.filter((p) => p.isActive && allowedPlatforms.includes(p.platform as typeof allowedPlatforms[number])).map((p) => p.platform),
   );
+  const syncedPlatforms = data.selectedPlatforms.filter((p) => CATEGORY_SYNC_PLATFORMS.includes(p));
 
   return (
     <div className="space-y-6">
@@ -94,29 +94,27 @@ export function Step4Submit({ data, onChange }: Props) {
         </div>
       </div>
 
-      {data.selectedPlatforms.filter((p) => CATEGORY_SYNC_PLATFORMS.includes(p)).length > 0 && (
+      {syncedPlatforms.length > 0 && (
         <div className="space-y-3">
           <h4 className="text-sm font-semibold text-gray-700">Kategorie na platformach</h4>
           <p className="text-xs text-gray-500">
             Wybierz kategorię na każdej platformie — bez tego ogłoszenie nie zostanie wystawione.
           </p>
-          {data.selectedPlatforms
-            .filter((p) => CATEGORY_SYNC_PLATFORMS.includes(p))
-            .map((platform) => (
-              <PlatformCategoryPicker
-                key={platform}
-                platform={platform}
-                selectedExternalId={data.platformCategories[platform]}
-                onSelect={(externalId) =>
-                  onChange({ platformCategories: { ...data.platformCategories, [platform]: externalId } })
-                }
-                onClear={() => {
-                  const next = { ...data.platformCategories };
-                  delete next[platform];
-                  onChange({ platformCategories: next });
-                }}
-              />
-            ))}
+          {syncedPlatforms.map((platform) => (
+            <PlatformCategoryPicker
+              key={platform}
+              platform={platform}
+              selectedExternalId={data.platformCategories[platform]}
+              onSelect={(externalId) =>
+                onChange({ platformCategories: { ...data.platformCategories, [platform]: externalId } })
+              }
+              onClear={() => {
+                const next = { ...data.platformCategories };
+                delete next[platform];
+                onChange({ platformCategories: next });
+              }}
+            />
+          ))}
         </div>
       )}
 

@@ -27,8 +27,7 @@ export async function getPlatformCategories(
   return prisma.platformCategory.findMany({
     where: {
       platform,
-      // null parentId zwraca root-level gdy parentId undefined; inaczej szuka po parentId
-      parentExternalId: parentId !== undefined ? parentId : null,
+      parentExternalId: parentId != null && parentId !== '' ? parentId : null,
     },
     orderBy: { name: 'asc' },
     select: { id: true, externalId: true, parentExternalId: true, name: true, isLeaf: true, depth: true },
