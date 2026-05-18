@@ -15,6 +15,7 @@ import { Step3Images } from './wizard/Step3Images';
 import { Step4Submit } from './wizard/Step4Submit';
 import { WizardData, WIZARD_DEFAULTS } from './wizard/types';
 import { ListingPreview } from '@/components/listings/ListingPreview';
+import { CATEGORY_SYNC_PLATFORMS } from '@/constants';
 
 const STEPS_AUTO = [
   { label: 'Kategoria', desc: 'Wybierz kategorię' },
@@ -47,6 +48,12 @@ export default function NewListingPage() {
     setData((prev) => ({ ...prev, ...update }));
   }
 
+  function platformCategoriesValid(): boolean {
+    return data.selectedPlatforms
+      .filter((p) => CATEGORY_SYNC_PLATFORMS.includes(p))
+      .every((p) => !!data.platformCategories[p]);
+  }
+
   function canProceed(): boolean {
     if (step === 0) return !!data.categoryType && !!data.categoryId;
     if (isAuto) {
@@ -56,9 +63,11 @@ export default function NewListingPage() {
       if (step === 1) return !!data.condition && !!data.title && (data.description?.length ?? 0) >= 10;
     }
     if (step === STEPS.length - 2) return true;
-    if (step === STEPS.length - 1) return !!data.basePrice;
+    if (step === STEPS.length - 1) return !!data.basePrice && platformCategoriesValid();
     return false;
   }
+
+  const isPublishing = data.selectedPlatforms.length > 0;
 
   async function handleSubmit() {
     if (!data.categoryId || !data.condition || !data.title || !data.description || !data.basePrice) return;
@@ -89,6 +98,7 @@ export default function NewListingPage() {
           partDetails: data.partDetails,
           damageDescription: data.damageDescription,
           attributes: Object.keys(data.attributes).length > 0 ? data.attributes : undefined,
+          platformCategories: Object.keys(data.platformCategories).length > 0 ? data.platformCategories : undefined,
         });
         listingId = listing.id;
         setCreatedListingId(listing.id);
@@ -97,7 +107,12 @@ export default function NewListingPage() {
       if (data.images.length > 0) await uploadImages(listingId, data.images);
       if (data.selectedPlatforms.length > 0) await publishListing(listingId, data.selectedPlatforms);
 
-      toast('Ogłoszenie zostało zapisane!', 'success');
+      toast(
+        data.selectedPlatforms.length > 0
+          ? 'Wystawianie w toku — sprawdź status w liście ogłoszeń'
+          : 'Szkic zapisany',
+        'success',
+      );
       navigate('/listings');
     } catch {
       toast('Błąd podczas zapisywania ogłoszenia', 'error');
@@ -163,14 +178,25 @@ export default function NewListingPage() {
             </Button>
           </div>
         ) : (
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setShowPreview(true)}>
-              <Eye className="h-4 w-4 mr-1" /> Podgląd
-            </Button>
-            <Button onClick={handleSubmit} disabled={!canProceed() || submitting}>
-              {submitting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Check className="h-4 w-4 mr-2" />}
-              {submitting ? 'Zapisywanie...' : 'Zapisz ogłoszenie'}
-            </Button>
+          <div className="flex flex-col items-end gap-2">
+            {data.selectedPlatforms.length > 0 && !platformCategoriesValid() && (
+              <p className="text-xs text-amber-600">
+                Wybierz kategorię dla każdej zaznaczonej platformy, żeby wystawić ogłoszenie.
+              </p>
+            )}
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setShowPreview(true)}>
+                <Eye className="h-4 w-4 mr-1" /> Podgląd
+              </Button>
+              <Button onClick={handleSubmit} disabled={!canProceed() || submitting}>
+                {submitting
+                  ? <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  : <Check className="h-4 w-4 mr-2" />}
+                {submitting
+                  ? (isPublishing ? 'Wystawianie...' : 'Zapisywanie...')
+                  : (isPublishing ? 'Wystawiaj' : 'Zapisz szkic')}
+              </Button>
+            </div>
           </div>
         )}
       </div>

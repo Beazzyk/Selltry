@@ -5,6 +5,7 @@ import { encrypt } from '../utils/crypto';
 import { env } from '../utils/env';
 import { prisma } from '../utils/prisma';
 import { tryDecrypt, isExpiringSoon, storeTokens } from '../utils/token-refresh';
+import { triggerSyncIfNeeded } from './category-auto-sync.service';
 
 // Otomoto używa Resource Owner Password Credentials — seller podaje login/hasło konta Otomoto Business
 const TOKEN_URL = 'https://www.otomoto.pl/api/open/oauth/token/';
@@ -42,6 +43,8 @@ export async function connectWithCredentials(
       connectedAt: new Date(),
     },
   });
+
+  triggerSyncIfNeeded(Platform.OTOMOTO, userId).catch(() => {});
 }
 
 export async function getValidAccessToken(userId: string): Promise<string> {

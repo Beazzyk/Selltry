@@ -54,6 +54,7 @@ export interface WizardData {
   basePrice?: number;
   quantity?: number;
   selectedPlatforms: Platform[];
+  platformCategories: Record<string, string>;
 }
 
 export const WIZARD_DEFAULTS: WizardData = {
@@ -62,6 +63,7 @@ export const WIZARD_DEFAULTS: WizardData = {
   attributes: {},
   images: [],
   selectedPlatforms: [],
+  platformCategories: {},
 };
 
 export const AUTOMOTIVE_PLATFORMS: Platform[] = ['ALLEGRO', 'OVOKO', 'OTOMOTO', 'OLX'];

@@ -46,11 +46,11 @@ export async function executePublish(data: PublishJobData): Promise<Record<strin
 
   for (const platform of platforms) {
     try {
-      // Use the listing's categoryId — not the listingId itself
-      const externalCategoryId = await categoryService.getExternalCategoryId(
-        dbListing.categoryId,
-        platform as Platform,
-      );
+      // Per-listing platform category override beats the global PlatformCategoryMapping
+      const categoryOverrides = (dbListing.platformCategories ?? {}) as Record<string, string>;
+      const externalCategoryId =
+        categoryOverrides[platform] ??
+        (await categoryService.getExternalCategoryId(dbListing.categoryId, platform as Platform));
 
       const service = getPlatformService(platform as Platform);
       const result = await service.publishListing(dbListing, externalCategoryId);

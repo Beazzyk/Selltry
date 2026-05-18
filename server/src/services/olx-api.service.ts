@@ -2,6 +2,8 @@ import axios, { AxiosError } from 'axios';
 import { AppError } from '../middleware/error.middleware';
 import { getPresignedUrl } from './image.service';
 import { getValidAccessToken } from './olx-oauth.service';
+import { RawPlatformCategory } from '../types/platform.types';
+import { flattenCategoryTree } from '../utils/category.utils';
 
 const BASE_URL = 'https://www.olx.pl/api/open';
 
@@ -104,6 +106,24 @@ export function buildAdvertPayload(params: {
 
 export async function getImagePresignedUrls(s3Keys: string[]): Promise<string[]> {
   return Promise.all(s3Keys.map((key) => getPresignedUrl(key)));
+}
+
+interface OlxCategoryItem {
+  id: number | string;
+  name: string;
+  parent_id?: number | string | null;
+  children?: OlxCategoryItem[];
+}
+
+interface OlxCategoriesResponse {
+  data?: OlxCategoryItem[];
+  [key: string]: unknown;
+}
+
+export async function fetchAllOlxCategories(userId: string): Promise<RawPlatformCategory[]> {
+  const token = await getValidAccessToken(userId);
+  const response = await olxRequest<OlxCategoriesResponse>(token, 'GET', '/categories');
+  return flattenCategoryTree(response.data ?? []);
 }
 
 async function olxRequest<T>(

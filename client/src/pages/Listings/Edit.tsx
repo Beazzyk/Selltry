@@ -53,6 +53,7 @@ function listingToWizardData(listing: Listing): WizardData {
     basePrice: listing.basePrice,
     quantity: listing.quantity,
     selectedPlatforms: [],
+    platformCategories: (listing.platformCategories as Record<string, string> | null) ?? {},
   };
 }
 

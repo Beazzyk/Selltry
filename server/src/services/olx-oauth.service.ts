@@ -6,6 +6,7 @@ import { encrypt } from '../utils/crypto';
 import { env } from '../utils/env';
 import { prisma } from '../utils/prisma';
 import { tryDecrypt, isExpiringSoon, storeTokens } from '../utils/token-refresh';
+import { triggerSyncIfNeeded } from './category-auto-sync.service';
 
 // OLX używa Authorization Code — identyczny pattern do Allegro
 const TOKEN_URL = 'https://www.olx.pl/api/open/oauth/token';
@@ -63,6 +64,8 @@ export async function exchangeCodeAndStoreConnection(code: string, state: string
       connectedAt: new Date(),
     },
   });
+
+  triggerSyncIfNeeded(Platform.OLX, payload.userId).catch(() => {});
 }
 
 export async function getValidAccessToken(userId: string): Promise<string> {

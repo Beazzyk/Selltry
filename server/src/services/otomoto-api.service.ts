@@ -3,6 +3,8 @@ import { AppError } from '../middleware/error.middleware';
 import { env } from '../utils/env';
 import { getPresignedUrl } from './image.service';
 import { getValidAccessToken } from './otomoto-oauth.service';
+import { RawPlatformCategory } from '../types/platform.types';
+import { flattenCategoryTree } from '../utils/category.utils';
 
 const BASE_URL = 'https://www.otomoto.pl/api/open';
 
@@ -110,6 +112,23 @@ async function otomotoRequest<T>(
       axiosError.message;
     throw new AppError(status, `Otomoto API error: ${message}`);
   }
+}
+
+interface OtomotoCategoryListItem {
+  id: string | number;
+  name: string;
+  children?: OtomotoCategoryListItem[];
+}
+
+interface OtomotoCategoryListResponse {
+  data?: OtomotoCategoryListItem[];
+  [key: string]: unknown;
+}
+
+export async function fetchAllOtomotoCategories(userId: string): Promise<RawPlatformCategory[]> {
+  const token = await getValidAccessToken(userId);
+  const response = await otomotoRequest<OtomotoCategoryListResponse>(token, 'GET', '/categories', undefined);
+  return flattenCategoryTree(response.data ?? []);
 }
 
 export function buildAdvertPayload(params: {
