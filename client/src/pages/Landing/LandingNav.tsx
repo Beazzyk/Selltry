@@ -10,10 +10,10 @@ export function LandingNav() {
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
         <Link to="/" className="flex items-center gap-2.5">
           <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 text-sm font-bold text-slate-950">
-            AL
+            S
           </span>
           <span className="font-display text-lg font-semibold tracking-tight text-white">
-            AutoLister
+            Selltry
           </span>
         </Link>
 
