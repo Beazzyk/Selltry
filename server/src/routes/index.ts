@@ -14,7 +14,7 @@ router.use('/listings', listingRoutes);
 router.use(categoryRoutes);
 router.use(platformRoutes);
 router.use(settingsRoutes);
-router.use(orderRoutes);
+router.use('/orders', orderRoutes);
 router.use(dashboardRoutes);
 
 export default router;

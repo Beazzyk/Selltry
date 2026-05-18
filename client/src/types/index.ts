@@ -7,6 +7,46 @@ export type IdentMethod = 'VIN' | 'CATALOG_NUMBER' | 'MANUAL' | 'AI_PARSED';
 export type ListingStatus = 'DRAFT' | 'PUBLISHING' | 'ACTIVE' | 'PARTIALLY_ACTIVE' | 'ENDED' | 'ERROR';
 export type PlatformStatus = 'PENDING' | 'ACTIVE' | 'ENDED' | 'ERROR';
 export type MarginType = 'PERCENTAGE' | 'FIXED_AMOUNT';
+export type OrderStatus =
+  | 'NEW' | 'CONFIRMED' | 'PROCESSING' | 'SHIPPED'
+  | 'DELIVERED' | 'CANCELLED' | 'RETURNED' | 'REFUNDED';
+
+export interface OrderItem {
+  id: string;
+  title: string;
+  quantity: number;
+  unitPrice: number;
+  externalId?: string;
+  listingId?: string;
+}
+
+export interface DeliveryAddress {
+  street?: string;
+  city?: string;
+  zipCode?: string;
+  country?: string;
+}
+
+export interface Order {
+  id: string;
+  platform: Platform;
+  externalOrderId: string;
+  status: OrderStatus;
+  buyerLogin?: string;
+  buyerEmail?: string;
+  buyerPhone?: string;
+  buyerFirstName?: string;
+  buyerLastName?: string;
+  deliveryAddress?: DeliveryAddress;
+  totalAmount: number;
+  currency: string;
+  platformOrderUrl?: string;
+  createdAt: string;
+  updatedAt: string;
+  syncedAt: string;
+  items: OrderItem[];
+  listing?: { id: string; title: string; images: { url?: string }[] } | null;
+}
 
 export interface User {
   id: string;

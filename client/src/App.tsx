@@ -14,6 +14,7 @@ import NewListingPage from '@/pages/Listings/New';
 import EditListingPage from '@/pages/Listings/Edit';
 import PlatformsPage from '@/pages/Platforms';
 import OrdersPage from '@/pages/Orders';
+import OrderDetailPage from '@/pages/Orders/Detail';
 import SettingsPage from '@/pages/Settings';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 
@@ -54,6 +55,7 @@ export default function App() {
                 />
                 <Route path="/platforms" element={<ErrorBoundary><PlatformsPage /></ErrorBoundary>} />
                 <Route path="/orders" element={<ErrorBoundary><OrdersPage /></ErrorBoundary>} />
+                <Route path="/orders/:id" element={<ErrorBoundary><OrderDetailPage /></ErrorBoundary>} />
                 <Route path="/settings" element={<ErrorBoundary><SettingsPage /></ErrorBoundary>} />
               </Route>
             </Route>
