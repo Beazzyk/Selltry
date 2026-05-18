@@ -5,13 +5,12 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { WizardData } from './types';
 import { Condition } from '@/types';
-import { useDescriptionGenerator } from '@/hooks/useDescriptionGenerator';
-import { PlatformTitleSuggestions } from '@/components/listings/PlatformTitleSuggestions';
-import { DescriptionEditor } from '@/components/listings/DescriptionEditor';
+import { MIN_DESCRIPTION_LENGTH } from './constants';
 
 interface Props {
   data: WizardData;
   onChange: (patch: Partial<WizardData>) => void;
+  showValidation?: boolean;
 }
 
 const CONDITIONS: { value: Condition; label: string; desc: string }[] = [
@@ -22,11 +21,101 @@ const CONDITIONS: { value: Condition; label: string; desc: string }[] = [
 
 const PART_SIDES = ['Lewa', 'Prawa', 'Nie dotyczy'];
 
-export function Step2Details({ data, onChange }: Props) {
-  const { generate, loading: aiLoading, error: aiError } = useDescriptionGenerator();
+export function Step2Details({ data, onChange, showValidation }: Props) {
+  const missingCategory = showValidation && !data.categoryId;
+  const [selectedParentId, setSelectedParentId] = useState<string>('');
+  const { data: categoryTree = [] } = useQuery({
+    queryKey: ['categories'],
+    queryFn: getCategories,
+  });
+
+  const selectedParent = categoryTree.find((c) => c.id === selectedParentId);
+
+  const children = selectedParent?.children ?? [];
+
+  useEffect(() => {
+    if (!data.categoryId || categoryTree.length === 0) return;
+    const parentFromChild = categoryTree.find((parent) => parent.children?.some((child) => child.id === data.categoryId));
+    if (parentFromChild) {
+      setSelectedParentId(parentFromChild.id);
+      return;
+    }
+    const parent = categoryTree.find((item) => item.id === data.categoryId);
+    if (parent) setSelectedParentId(parent.id);
+  }, [data.categoryId, categoryTree]);
+
+  function handleParentChange(parentId: string) {
+    setSelectedParentId(parentId);
+    const parent = categoryTree.find((c) => c.id === parentId);
+    if (parent?.children?.length) {
+      onChange({ categoryId: undefined });
+    } else {
+      onChange({ categoryId: parentId });
+    }
+  }
+
+  function autoGenerateTitle() {
+    const parts: string[] = [];
+    if (data.categoryId) {
+      const cat = categoryTree
+        .flatMap((c) => [c, ...(c.children ?? [])])
+        .find((c) => c.id === data.categoryId);
+      if (cat) parts.push(cat.name);
+    }
+    if (data.partSide && data.partSide !== 'Nie dotyczy') parts.push(data.partSide.toLowerCase());
+    if (data.condition === 'USED') parts.push('używana');
+    if (data.condition === 'DAMAGED') parts.push('uszkodzona');
+    onChange({ title: parts.join(' ') });
+  }
 
   return (
     <div className="space-y-6">
+      {/* Kategoria */}
+      <div>
+        <Label className="text-base font-semibold mb-2 block">Kategoria części</Label>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <Label className="text-xs text-gray-500 mb-1 block">Kategoria główna</Label>
+            <select
+              value={selectedParent?.id ?? ''}
+              onChange={(e) => handleParentChange(e.target.value)}
+              className={cn(
+                'w-full rounded-md border bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500',
+                missingCategory ? 'border-red-400 ring-1 ring-red-200' : 'border-gray-300',
+              )}
+            >
+              <option value="">Wybierz kategorię</option>
+              {categoryTree.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          </div>
+
+          {children.length > 0 && (
+            <div>
+              <Label className="text-xs text-gray-500 mb-1 block">Podkategoria</Label>
+              <select
+                value={data.categoryId ?? ''}
+                onChange={(e) => onChange({ categoryId: e.target.value || undefined })}
+                className={cn(
+                  'w-full rounded-md border bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500',
+                  missingCategory ? 'border-red-400 ring-1 ring-red-200' : 'border-gray-300',
+                )}
+              >
+                <option value="">Wybierz podkategorię</option>
+                {children.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
+        {missingCategory && (
+          <p className="mt-2 text-sm text-red-600">Wybierz kategorię, aby przejść dalej.</p>
+        )}
+      </div>
+
+      {/* Strona montażu */}
       <div>
         <Label className="text-base font-semibold mb-2 block">Strona montażu</Label>
         <div className="flex gap-2">
@@ -82,36 +171,18 @@ export function Step2Details({ data, onChange }: Props) {
       </div>
 
       <div>
-        <div className="flex items-center justify-between mb-1">
-          <Label htmlFor="description">Opis *</Label>
-          <Button type="button" size="sm" variant="outline"
-            onClick={() => void generate(data, onChange)}
-            disabled={aiLoading}
-            className="gap-1.5 text-[var(--navy)] border-[var(--border-2)] hover:bg-[var(--bg-2)]"
-          >
-            {aiLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-            {aiLoading ? 'Generuję...' : 'Generuj z AI'}
-          </Button>
-        </div>
-        {aiError && <p className="text-xs text-red-500 mb-1">{aiError}</p>}
-        {data.description?.startsWith('<') ? (
-          <DescriptionEditor
-            value={data.description}
-            onChange={(html) => onChange({ description: html })}
-            onClear={() => onChange({ description: undefined })}
-          />
-        ) : (
-          <>
-            <textarea id="description" rows={5} placeholder="Opisz część, jej stan, pasujące pojazdy lub wygeneruj AI..."
-              value={data.description ?? ''}
-              onChange={(e) => onChange({ description: e.target.value || undefined })}
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--navy)]"
-            />
-            <p className={cn('text-xs mt-1 text-right', (data.description?.length ?? 0) < 10 ? 'text-red-400' : 'text-gray-400')}>
-              {data.description?.length ?? 0} znaków
-            </p>
-          </>
-        )}
+        <Label htmlFor="description">Opis (min. {MIN_DESCRIPTION_LENGTH} znaków)</Label>
+        <textarea
+          id="description"
+          rows={5}
+          placeholder="Opisz część, jej stan, pasujące pojazdy..."
+          value={data.description ?? ''}
+          onChange={(e) => onChange({ description: e.target.value || undefined })}
+          className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+        />
+        <p className={cn('text-xs mt-1 text-right', (data.description?.length ?? 0) < MIN_DESCRIPTION_LENGTH ? 'text-red-400' : 'text-gray-400')}>
+          {data.description?.length ?? 0} znaków
+        </p>
       </div>
 
       <div>

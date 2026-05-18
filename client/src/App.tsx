@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { useEffect } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { ProtectedRoute } from '@/components/shared/ProtectedRoute';
@@ -8,6 +8,7 @@ import { getMe } from '@/api/auth.api';
 import LandingPage from '@/pages/Landing';
 import LoginPage from '@/pages/Auth/Login';
 import RegisterPage from '@/pages/Auth/Register';
+import LandingPage from '@/pages/Landing';
 import DashboardPage from '@/pages/Dashboard';
 import ListingsPage from '@/pages/Listings';
 import NewListingPage from '@/pages/Listings/New';
@@ -47,7 +48,7 @@ export default function App() {
       <BrowserRouter>
         <AuthLoader>
           <Routes>
-            <Route path="/" element={<HomeRoute />} />
+            <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
 
@@ -56,7 +57,10 @@ export default function App() {
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/listings" element={<ListingsPage />} />
                 <Route path="/listings/new" element={<NewListingPage />} />
-                <Route path="/listings/:id/edit" element={<EditListingPage />} />
+                <Route
+                  path="/listings/:id/edit"
+                  element={<ErrorBoundary><EditListingPage /></ErrorBoundary>}
+                />
                 <Route path="/platforms" element={<ErrorBoundary><PlatformsPage /></ErrorBoundary>} />
                 <Route path="/orders" element={<ErrorBoundary><OrdersPage /></ErrorBoundary>} />
                 <Route path="/settings" element={<ErrorBoundary><SettingsPage /></ErrorBoundary>} />

@@ -1,15 +1,17 @@
-import { NavLink, useNavigate } from 'react-router-dom';
+import { Link, NavLink } from 'react-router-dom';
+import { Home, LayoutDashboard, Package, PlugZap, Settings, ShoppingCart, LogOut } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { logout } from '@/api/auth.api';
 import { useAuthStore } from '@/store/auth.store';
 import { SelltryLogo } from '@/pages/Landing/SelltryLogo';
 
-const MAIN_NAV = [
-  { to: '/dashboard', label: 'Dashboard',
-    icon: <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="16" height="16"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg> },
-  { to: '/listings', label: 'Ogłoszenia',
-    icon: <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="16" height="16"><path d="M2 4h12M2 8h12M2 12h8"/></svg> },
-  { to: '/orders', label: 'Zamówienia',
-    icon: <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="16" height="16"><path d="M2 5h12l-1 9H3z"/><path d="M5 5V3a3 3 0 0 1 6 0v2"/></svg> },
+const NAV_ITEMS = [
+  { to: '/', label: 'Strona główna', icon: Home },
+  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/listings', label: 'Ogłoszenia', icon: Package },
+  { to: '/platforms', label: 'Platformy', icon: PlugZap },
+  { to: '/orders', label: 'Zamówienia', icon: ShoppingCart },
+  { to: '/settings', label: 'Ustawienia', icon: Settings },
 ];
 
 const ACCOUNT_NAV = [
@@ -37,10 +39,11 @@ export function Sidebar({ onNavigate }: Props) {
     : 'U';
 
   return (
-    <aside className="sb">
-      <div className="sb-logo">
-        <SelltryLogo size={26} />
-        <span className="lt">Selltry</span>
+    <aside className="flex h-full w-60 flex-col bg-gray-900 text-white">
+      <div className="flex h-16 items-center border-b border-gray-800 px-6">
+        <Link to="/" className="text-lg font-bold text-white hover:text-amber-400">
+          AutoLister
+        </Link>
       </div>
 
       <nav className="sb-section">

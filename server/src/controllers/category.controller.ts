@@ -18,24 +18,10 @@ export async function getCategories(req: Request, res: Response, next: NextFunct
   }
 }
 
-export async function getCategoryTypes(req: Request, res: Response, next: NextFunction) {
+export async function getCategoryMappings(req: Request, res: Response, next: NextFunction) {
   try {
-    const types = await categoryService.getCategoryTypes();
-    res.json(types);
-  } catch (err) {
-    next(err);
-  }
-}
-
-export async function getBrands(req: Request, res: Response, next: NextFunction) {
-  try {
-    const { type } = req.query;
-    if (!type || !Object.values(CategoryType).includes(type as CategoryType)) {
-      res.status(400).json({ error: 'Valid ?type= required' });
-      return;
-    }
-    const brands = await categoryService.getBrands(type as CategoryType);
-    res.json(brands);
+    const mappings = await categoryService.getCategoryMappingsExport();
+    res.json(mappings);
   } catch (err) {
     next(err);
   }

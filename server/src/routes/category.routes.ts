@@ -6,6 +6,7 @@ const router = Router();
 
 router.use(authMiddleware);
 
+router.get('/categories/mappings', ctrl.getCategoryMappings);
 router.get('/categories', ctrl.getCategories);
 router.get('/category-types', ctrl.getCategoryTypes);
 router.get('/brands', ctrl.getBrands);

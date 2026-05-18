@@ -87,6 +87,40 @@ export async function getAttributeSchema(internalCategoryId: string, platform: P
   return (mapping.attributeSchema as object | null) ?? {};
 }
 
+export async function getCategoryMappingsExport() {
+  const categories = await prisma.internalCategory.findMany({
+    where: { parentId: { not: null } },
+    include: {
+      parent: { select: { name: true, slug: true } },
+      platformMappings: true,
+    },
+    orderBy: [{ parent: { name: 'asc' } }, { name: 'asc' }],
+  });
+
+  const platforms = Object.values(Platform);
+
+  return categories.map((category) => ({
+    id: category.id,
+    name: category.name,
+    slug: category.slug,
+    parentName: category.parent?.name ?? null,
+    parentSlug: category.parent?.slug ?? null,
+    mappings: platforms.reduce(
+      (acc, platform) => {
+        const mapping = category.platformMappings.find((m) => m.platform === platform);
+        acc[platform] = mapping
+          ? {
+              externalCategoryId: mapping.externalCategoryId,
+              externalCategoryName: mapping.externalCategoryName,
+            }
+          : null;
+        return acc;
+      },
+      {} as Record<Platform, { externalCategoryId: string; externalCategoryName: string | null } | null>,
+    ),
+  }));
+}
+
 export async function syncPlatformCategories(platform: Platform): Promise<void> {
   await prisma.platformCategoryMapping.updateMany({
     where: { platform },

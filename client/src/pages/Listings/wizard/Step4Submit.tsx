@@ -1,6 +1,8 @@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { WizardData, getPlatformsForCategory } from './types';
+import { WizardData } from './types';
+import { CONDITION_PART_LABELS } from './constants';
+import { Platform } from '@/types';
 import { useQuery } from '@tanstack/react-query';
 import { getPlatforms } from '@/api/platforms.api';
 import { getMarginRules } from '@/api/margins.api';
@@ -10,17 +12,16 @@ import { CATEGORY_SYNC_PLATFORMS } from '@/constants';
 interface Props {
   data: WizardData;
   onChange: (patch: Partial<WizardData>) => void;
+  existingImageCount?: number;
 }
 
-export function Step4Submit({ data, onChange }: Props) {
+export function Step4Submit({ data, onChange, existingImageCount = 0 }: Props) {
   const { data: platforms = [] } = useQuery({ queryKey: ['platforms'], queryFn: getPlatforms });
   const { data: margins = [] } = useQuery({ queryKey: ['margins'], queryFn: getMarginRules });
 
-  const allowedPlatforms = getPlatformsForCategory(data.categoryType);
-  const activePlatforms = new Set(
-    platforms.filter((p) => p.isActive && allowedPlatforms.includes(p.platform as typeof allowedPlatforms[number])).map((p) => p.platform),
-  );
-  const syncedPlatforms = data.selectedPlatforms.filter((p) => CATEGORY_SYNC_PLATFORMS.includes(p));
+  const activePlatforms = new Set(platforms.filter((platform) => platform.isActive).map((platform) => platform.platform));
+  const imageCount = existingImageCount + data.images.length;
+  const conditionLabel = data.condition ? CONDITION_PART_LABELS[data.condition] ?? data.condition : '—';
 
   return (
     <div className="space-y-6">
@@ -125,9 +126,11 @@ export function Step4Submit({ data, onChange }: Props) {
           <dt className="text-gray-500">Tytuł</dt>
           <dd className="text-gray-900 truncate">{data.title ?? '—'}</dd>
           <dt className="text-gray-500">Stan</dt>
-          <dd className="text-gray-900">{data.condition ?? '—'}</dd>
+          <dd className="text-gray-900">{conditionLabel}</dd>
           <dt className="text-gray-500">Zdjęcia</dt>
-          <dd className="text-gray-900">{data.images.length} szt.</dd>
+          <dd className="text-gray-900">{imageCount}</dd>
+          <dt className="text-gray-500">Ilość sztuk</dt>
+          <dd className="text-gray-900">{data.quantity ?? 1} szt.</dd>
           <dt className="text-gray-500">Cena bazowa</dt>
           <dd className="text-gray-900 font-semibold">
             {data.basePrice ? `${data.basePrice.toFixed(2)} PLN` : '—'}
@@ -136,9 +139,10 @@ export function Step4Submit({ data, onChange }: Props) {
       </div>
 
       <p className="text-xs text-gray-400">
+        Ogłoszenie zostanie zapisane w systemie.
         {data.selectedPlatforms.length > 0
-          ? 'Kliknij „Wystawiaj" — ogłoszenie trafi do kolejki publikacji na wybranych platformach.'
-          : 'Nie wybrałeś platform — ogłoszenie zostanie zapisane jako szkic. Możesz je wystawić później z listy ogłoszeń.'}
+          ? ' Zaznaczone platformy otrzymają ogłoszenie od razu po zapisie.'
+          : ' Możesz opublikować je później w szczegółach ogłoszenia lub na zakładce Platformy.'}
       </p>
 
       {data.basePrice && data.selectedPlatforms.length > 0 && (

@@ -28,6 +28,23 @@ export async function getCategories(type?: CategoryType): Promise<InternalCatego
   return data;
 }
 
+export interface CategoryMappingExport {
+  id: string;
+  name: string;
+  slug: string;
+  parentName: string | null;
+  parentSlug: string | null;
+  mappings: Record<
+    string,
+    { externalCategoryId: string; externalCategoryName: string | null } | null
+  >;
+}
+
+export async function getCategoryMappings(): Promise<CategoryMappingExport[]> {
+  const { data } = await apiClient.get<CategoryMappingExport[]>('/categories/mappings');
+  return data;
+}
+
 export async function getVehicleMakes(type?: VehicleType): Promise<VehicleMake[]> {
   const { data } = await apiClient.get<VehicleMake[]>('/vehicles/makes', {
     params: type ? { type } : {},

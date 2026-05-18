@@ -1,66 +1,85 @@
-import { Trash2 } from 'lucide-react';
+import { X } from 'lucide-react';
 import { ImageUploader } from '@/components/shared/ImageUploader';
+import { cn } from '@/lib/utils';
+import { ListingImage } from '@/types';
+import { MIN_IMAGES } from './constants';
 import { WizardData } from './types';
 import { ListingImage } from '@/types';
 
 interface Props {
   data: WizardData;
   onChange: (patch: Partial<WizardData>) => void;
+  showImageError?: boolean;
   existingImages?: ListingImage[];
-  onDeleteExisting?: (id: string) => void;
+  onRemoveExisting?: (imageId: string) => void;
 }
 
-export function Step3Images({ data, onChange, existingImages, onDeleteExisting }: Props) {
-  const totalCount = (existingImages?.length ?? 0) + data.images.length;
+export function Step3Images({
+  data,
+  onChange,
+  showImageError,
+  existingImages = [],
+  onRemoveExisting,
+}: Props) {
+  const totalCount = existingImages.length + data.images.length;
+  const missingImages = totalCount < MIN_IMAGES;
 
   return (
     <div className="space-y-4">
       <div>
-        <h3 className="text-base font-semibold text-gray-900">Zdjęcia ogłoszenia</h3>
-        <p className="text-sm text-gray-500 mt-1">
-          Pierwsze zdjęcie będzie zdjęciem głównym. Dodaj co najmniej 1, maksymalnie 20 zdjęć.
+        <h3 className="text-base font-semibold text-gray-900">Zdjęcia ogłoszenia *</h3>
+        <p className="mt-1 text-sm text-gray-500">
+          Wymagane min. {MIN_IMAGES} zdjęć łącznie (masz {totalCount}). Maks. 20.
         </p>
       </div>
 
-      {existingImages && existingImages.length > 0 && (
-        <div className="space-y-2">
-          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Obecne zdjęcia</p>
-          <div className="grid grid-cols-4 gap-2">
-            {existingImages.map((img) => (
-              <div key={img.id} className="relative group rounded-lg overflow-hidden border border-gray-200 aspect-square">
-                <img src={img.url} alt="" className="w-full h-full object-cover" />
-                {onDeleteExisting && (
-                  <button
-                    type="button"
-                    onClick={() => onDeleteExisting(img.id)}
-                    className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <Trash2 className="h-5 w-5 text-white" />
-                  </button>
-                )}
-                {img.isMain && (
-                  <span className="absolute top-1 left-1 text-[10px] bg-[var(--navy)] text-white px-1.5 py-0.5 rounded">Główne</span>
-                )}
-              </div>
-            ))}
-          </div>
+      {existingImages.length > 0 && (
+        <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
+          {existingImages.map((image, index) => (
+            <div key={image.id} className="relative aspect-square">
+              <img
+                src={image.url}
+                alt={`Zdjęcie ${index + 1}`}
+                className="h-full w-full rounded-lg border border-gray-200 object-cover"
+              />
+              {index === 0 && (
+                <span className="absolute left-1 top-1 rounded bg-primary-600 px-1.5 py-0.5 text-xs text-white">
+                  Główne
+                </span>
+              )}
+              {onRemoveExisting && (
+                <button
+                  type="button"
+                  onClick={() => onRemoveExisting(image.id)}
+                  className="absolute right-1 top-1 rounded-full bg-red-600 p-0.5 text-white"
+                  title="Usuń zdjęcie"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              )}
+            </div>
+          ))}
         </div>
       )}
 
-      <div className="space-y-2">
-        {existingImages && existingImages.length > 0 && (
-          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Dodaj nowe</p>
-        )}
-        <ImageUploader
-          files={data.images}
-          onChange={(images) => onChange({ images })}
-          maxFiles={Math.max(0, 20 - (existingImages?.length ?? 0))}
-        />
-      </div>
+      <ImageUploader
+        files={data.images}
+        onChange={(images) => onChange({ images })}
+        maxFiles={Math.max(0, 20 - existingImages.length)}
+      />
 
-      {totalCount === 0 && (
-        <p className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
-          Ogłoszenie bez zdjęć sprzedaje się znacznie gorzej. Dodaj co najmniej 1 zdjęcie.
+      {missingImages && (
+        <p
+          className={cn(
+            'rounded-lg border px-4 py-3 text-sm',
+            showImageError
+              ? 'border-red-200 bg-red-50 text-red-700'
+              : 'border-amber-200 bg-amber-50 text-amber-700',
+          )}
+        >
+          {showImageError
+            ? 'Dodaj co najmniej jedno zdjęcie, aby przejść dalej.'
+            : 'Ogłoszenie bez zdjęć sprzedaje się znacznie gorzej.'}
         </p>
       )}
     </div>

@@ -33,15 +33,13 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="auth-page">
-      <div className="auth-card">
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 28 }}>
-          <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, textDecoration: 'none', marginBottom: 20 }}>
-            <SelltryLogo size={32} />
-            <span style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--ink)', fontFamily: 'var(--font-sans)' }}>Selltry</span>
+    <div className="flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="w-full max-w-md space-y-8 rounded-xl bg-white p-8 shadow-sm border border-gray-200">
+        <div className="text-center">
+          <Link to="/" className="font-display text-2xl font-bold text-gray-900 hover:text-primary-600">
+            AutoLister
           </Link>
-          <h1 style={{ margin: '0 0 6px', fontSize: 22, fontWeight: 600, letterSpacing: '-0.015em', color: 'var(--ink)', fontFamily: 'var(--font-sans)' }}>Utwórz konto</h1>
-          <p style={{ margin: 0, fontSize: 14, color: 'var(--muted)', fontFamily: 'var(--font-sans)' }}>Zacznij sprzedawać na 4 platformach</p>
+          <p className="mt-2 text-sm text-gray-600">Utwórz nowe konto</p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>

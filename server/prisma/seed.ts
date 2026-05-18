@@ -1,4 +1,5 @@
-import { PrismaClient, Platform, VehicleType, CategoryType } from '@prisma/client';
+import { PrismaClient, Platform, VehicleType } from '@prisma/client';
+import { INTERNAL_CATEGORY_TREE } from '../src/constants/internal-categories';
 
 const prisma = new PrismaClient();
 
@@ -35,6 +36,7 @@ async function seedVehicleMakes() {
     { name: 'Seat', models: ['Ibiza', 'Leon', 'Ateca', 'Alhambra'] },
     { name: 'Skoda', models: ['Octavia', 'Fabia', 'Superb', 'Kodiaq', 'Kamiq'] },
     { name: 'Subaru', models: ['Impreza', 'Legacy', 'Forester', 'Outback'] },
+    { name: 'Suzuki', models: ['Samurai', 'Swift', 'Vitara', 'Jimny', 'Ignis', 'SX4'] },
     { name: 'Toyota', models: ['Corolla', 'Avensis', 'Yaris', 'RAV4', 'Hilux'] },
     { name: 'Volkswagen', models: ['Golf', 'Passat', 'Polo', 'Tiguan', 'Touran', 'Transporter', 'Crafter'] },
     { name: 'Volvo', models: ['S40', 'S60', 'S90', 'V70', 'V90', 'XC60', 'XC90'] },
@@ -233,166 +235,7 @@ async function upsertMakeWithType(name: string, type: VehicleType) {
 }
 
 async function seedInternalCategories() {
-  const tree = [
-    {
-      name: 'Silnik',
-      slug: 'engine',
-      children: [
-        { name: 'Blok silnika', slug: 'engine-block' },
-        { name: 'Głowica', slug: 'cylinder-head' },
-        { name: 'Rozrząd', slug: 'timing' },
-        { name: 'Turbosprężarka', slug: 'turbocharger' },
-        { name: 'Alternator', slug: 'alternator' },
-        { name: 'Rozrusznik', slug: 'starter' },
-      ],
-    },
-    {
-      name: 'Skrzynia biegów',
-      slug: 'gearbox',
-      children: [
-        { name: 'Automatyczna', slug: 'gearbox-automatic' },
-        { name: 'Manualna', slug: 'gearbox-manual' },
-      ],
-    },
-    {
-      name: 'Zawieszenie',
-      slug: 'suspension',
-      children: [
-        { name: 'Amortyzatory', slug: 'shock-absorbers' },
-        { name: 'Sprężyny', slug: 'springs' },
-        { name: 'Drążki i wahacze', slug: 'control-arms' },
-      ],
-    },
-    {
-      name: 'Hamulce',
-      slug: 'brakes',
-      children: [
-        { name: 'Tarcze', slug: 'brake-discs' },
-        { name: 'Klocki', slug: 'brake-pads' },
-        { name: 'Zaciski', slug: 'brake-calipers' },
-        { name: 'Przewody', slug: 'brake-lines' },
-      ],
-    },
-    {
-      name: 'Oświetlenie',
-      slug: 'lighting',
-      children: [
-        { name: 'Lampa przednia', slug: 'headlight' },
-        { name: 'Lampa tylna', slug: 'taillight' },
-        { name: 'Kierunkowskaz', slug: 'turn-signal' },
-        { name: 'Lampa przeciwmgłowa', slug: 'fog-lamp' },
-      ],
-    },
-    {
-      name: 'Karoseria',
-      slug: 'bodywork',
-      children: [
-        { name: 'Zderzak', slug: 'bumper' },
-        { name: 'Błotnik', slug: 'fender' },
-        { name: 'Maska', slug: 'hood' },
-        { name: 'Drzwi', slug: 'door' },
-        { name: 'Szyba', slug: 'glass' },
-      ],
-    },
-    {
-      name: 'Elektryka',
-      slug: 'electronics',
-      children: [
-        { name: 'Wiązka elektryczna', slug: 'wiring-harness' },
-        { name: 'Sterownik ECU', slug: 'ecu' },
-        { name: 'Czujniki', slug: 'sensors' },
-      ],
-    },
-    {
-      name: 'Chłodzenie',
-      slug: 'cooling',
-      children: [
-        { name: 'Chłodnica', slug: 'radiator' },
-        { name: 'Wentylator', slug: 'fan' },
-        { name: 'Termostat', slug: 'thermostat' },
-      ],
-    },
-    {
-      name: 'Układ kierowniczy',
-      slug: 'steering',
-      children: [
-        { name: 'Przekładnia', slug: 'steering-rack' },
-        { name: 'Pompa wspomagania', slug: 'power-steering-pump' },
-      ],
-    },
-    {
-      name: 'Inne',
-      slug: 'other',
-      children: [],
-    },
-  ];
-
-  const nonAutoTree = [
-    {
-      name: 'Elektronika', slug: 'electronics-root', type: CategoryType.ELECTRONICS,
-      children: [
-        { name: 'Smartfony', slug: 'smartphones' },
-        { name: 'Laptopy', slug: 'laptops' },
-        { name: 'Tablety', slug: 'tablets' },
-        { name: 'TV i monitory', slug: 'tv-monitors' },
-        { name: 'Audio i Hi-Fi', slug: 'audio-hifi' },
-        { name: 'Gry i konsole', slug: 'games-consoles' },
-        { name: 'Foto i kamery', slug: 'photo-cameras' },
-        { name: 'Inne elektronika', slug: 'electronics-other' },
-      ],
-    },
-    {
-      name: 'Dom i ogród', slug: 'home-garden', type: CategoryType.HOME_GARDEN,
-      children: [
-        { name: 'Meble', slug: 'furniture' },
-        { name: 'Oświetlenie domowe', slug: 'home-lighting' },
-        { name: 'AGD', slug: 'home-appliances' },
-        { name: 'Dekoracje', slug: 'decorations' },
-        { name: 'Ogród', slug: 'garden' },
-        { name: 'Inne dom i ogród', slug: 'home-garden-other' },
-      ],
-    },
-    {
-      name: 'Moda', slug: 'fashion', type: CategoryType.FASHION,
-      children: [
-        { name: 'Odzież damska', slug: 'womens-clothing' },
-        { name: 'Odzież męska', slug: 'mens-clothing' },
-        { name: 'Obuwie', slug: 'footwear' },
-        { name: 'Akcesoria', slug: 'accessories' },
-        { name: 'Inne moda', slug: 'fashion-other' },
-      ],
-    },
-    {
-      name: 'Sport', slug: 'sport', type: CategoryType.SPORT,
-      children: [
-        { name: 'Rowery', slug: 'bicycles' },
-        { name: 'Fitness i siłownia', slug: 'fitness' },
-        { name: 'Sporty zimowe', slug: 'winter-sports' },
-        { name: 'Sporty wodne', slug: 'water-sports' },
-        { name: 'Inne sport', slug: 'sport-other' },
-      ],
-    },
-    {
-      name: 'Narzędzia', slug: 'tools', type: CategoryType.TOOLS,
-      children: [
-        { name: 'Elektronarzędzia', slug: 'power-tools' },
-        { name: 'Narzędzia ręczne', slug: 'hand-tools' },
-        { name: 'Maszyny', slug: 'machines' },
-        { name: 'Inne narzędzia', slug: 'tools-other' },
-      ],
-    },
-    {
-      name: 'Inne', slug: 'other-root', type: CategoryType.OTHER,
-      children: [
-        { name: 'Zabawki', slug: 'toys' },
-        { name: 'Książki i muzyka', slug: 'books-music' },
-        { name: 'Zdrowie i uroda', slug: 'health-beauty' },
-        { name: 'Pozostałe', slug: 'misc' },
-      ],
-    },
-  ];
-
-  for (const parent of tree) {
+  for (const parent of INTERNAL_CATEGORY_TREE) {
     const parentRecord = await prisma.internalCategory.upsert({
       where: { slug: parent.slug },
       update: { categoryType: CategoryType.AUTOMOTIVE },

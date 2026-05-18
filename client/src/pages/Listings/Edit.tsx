@@ -1,71 +1,27 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { isAxiosError } from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft, ChevronRight, Check, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast';
 import { cn } from '@/lib/utils';
-import { getListing, updateListing, uploadImages, deleteImage } from '@/api/listings.api';
-import { Step1Category } from './wizard/Step1Category';
-import { Step1Vehicle } from './wizard/Step1Vehicle';
+import {
+  deleteImage,
+  getListing,
+  updateListing,
+  uploadImages,
+} from '@/api/listings.api';
+import { publishListing } from '@/api/platforms.api';
+import { ListingImage } from '@/types';
 import { Step2Details } from './wizard/Step2Details';
-import { Step2FieldsGeneric } from './wizard/Step2FieldsGeneric';
-import { Step3Images } from './wizard/Step3Images';
+import { Step2VehicleAndImages } from './wizard/Step2VehicleAndImages';
 import { Step4Submit } from './wizard/Step4Submit';
 import { WizardData, WIZARD_DEFAULTS } from './wizard/types';
-import { Listing, ListingImage } from '@/types';
-
-const STEPS_AUTO = [
-  { label: 'Kategoria', desc: 'Zmień kategorię' },
-  { label: 'Pojazd', desc: 'Dane pojazdu' },
-  { label: 'Szczegóły', desc: 'Stan i opis' },
-  { label: 'Zdjęcia', desc: 'Zarządzaj zdjęciami' },
-  { label: 'Cena', desc: 'Cena i platformy' },
-];
-
-const STEPS_GENERIC = [
-  { label: 'Kategoria', desc: 'Zmień kategorię' },
-  { label: 'Szczegóły', desc: 'Stan i opis' },
-  { label: 'Zdjęcia', desc: 'Zarządzaj zdjęciami' },
-  { label: 'Cena', desc: 'Cena i platformy' },
-];
-
-function listingToWizardData(listing: Listing): WizardData {
-  return {
-    identMethod: listing.identMethod,
-    vin: listing.vin,
-    catalogNumber: listing.catalogNumber,
-    vehicleType: listing.vehicleType,
-    vehicleMakeId: listing.vehicleMakeId,
-    vehicleModelId: listing.vehicleModelId,
-    vehicleGenId: listing.vehicleGenId,
-    vehicleYearRaw: listing.vehicleYearRaw,
-    vehicleEngine: listing.vehicleEngine,
-    categoryId: listing.categoryId,
-    partSide: listing.partSide,
-    condition: listing.condition,
-    title: listing.title,
-    description: listing.description,
-    partDetails: listing.partDetails,
-    damageDescription: listing.damageDescription,
-    attributes: (listing.attributes as Record<string, string | number> | undefined) ?? {},
-    images: [],
-    basePrice: listing.basePrice,
-    quantity: listing.quantity,
-    selectedPlatforms: [],
-    platformCategories: (listing.platformCategories as Record<string, string> | null) ?? {},
-  };
-}
-
-function SkeletonWizard() {
-  return (
-    <div className="max-w-2xl mx-auto space-y-6 animate-pulse">
-      <div className="h-8 bg-gray-200 rounded w-48" />
-      <div className="flex gap-2">{[...Array(4)].map((_, i) => <div key={i} className="flex-1 h-10 bg-gray-200 rounded" />)}</div>
-      <div className="h-64 bg-gray-200 rounded-xl" />
-    </div>
-  );
-}
+import { WIZARD_STEPS } from './wizard/constants';
+import { canProceed, getStepValidationErrors, hasMinImages } from './wizard/validation';
+import { mapListingToWizard } from './wizard/mapListingToWizard';
+import { WizardDraftSkeleton } from './wizard/WizardDraftSkeleton';
 
 export default function EditListingPage() {
   const { id } = useParams<{ id: string }>();
@@ -75,127 +31,225 @@ export default function EditListingPage() {
   const [data, setData] = useState<WizardData>(WIZARD_DEFAULTS);
   const [existingImages, setExistingImages] = useState<ListingImage[]>([]);
   const [submitting, setSubmitting] = useState(false);
-  const [initialized, setInitialized] = useState(false);
+  const [stepError, setStepError] = useState(false);
 
   const { data: listing, isLoading, isError } = useQuery({
     queryKey: ['listing', id],
     queryFn: () => getListing(id!),
-    enabled: !!id,
+    enabled: Boolean(id),
   });
 
   useEffect(() => {
-    if (listing && !initialized) {
-      setData(listingToWizardData(listing));
-      setExistingImages(listing.images);
-      setInitialized(true);
-    }
-  }, [listing, initialized]);
+    if (!listing) return;
+    setData(mapListingToWizard(listing));
+    setExistingImages(listing.images);
+  }, [listing]);
 
-  const isAuto = data.categoryType === 'AUTOMOTIVE' || !data.categoryType;
-  const STEPS = isAuto ? STEPS_AUTO : STEPS_GENERIC;
+  const existingCount = existingImages.length;
 
   function patch(update: Partial<WizardData>) {
-    setData((prev) => ({ ...prev, ...update }));
+    setData((prev) => {
+      const next = { ...prev, ...update };
+      if (stepError && canProceed(step, next, existingCount)) setStepError(false);
+      return next;
+    });
   }
 
-  function canProceed(): boolean {
-    if (step === 0) return !!data.categoryId;
-    if (isAuto) {
-      if (step === 1) return !!data.vehicleType;
-      if (step === 2) return !!data.condition && !!data.title && (data.description?.length ?? 0) >= 10;
-    } else {
-      if (step === 1) return !!data.condition && !!data.title && (data.description?.length ?? 0) >= 10;
+  async function handleRemoveExisting(imageId: string) {
+    if (!id) return;
+    try {
+      await deleteImage(id, imageId);
+      setExistingImages((prev) => prev.filter((img) => img.id !== imageId));
+    } catch {
+      toast('Nie udało się usunąć zdjęcia', 'error');
     }
-    if (step === STEPS.length - 2) return true;
-    if (step === STEPS.length - 1) return !!data.basePrice;
-    return false;
+  }
+
+  function goNext() {
+    const errors = getStepValidationErrors(step, data, existingCount);
+    if (errors.length > 0) {
+      setStepError(true);
+      toast(errors[0], 'error');
+      return;
+    }
+    setStepError(false);
+    setStep((s) => s + 1);
+  }
+
+  function goBack() {
+    setStepError(false);
+    if (step === 0) navigate('/listings');
+    else setStep((s) => s - 1);
   }
 
   async function handleSubmit() {
-    if (!id || !data.categoryId || !data.condition || !data.title || !data.description || !data.basePrice) return;
+    if (!id || !canProceed(2, data, existingCount)) {
+      setStepError(true);
+      if (!hasMinImages(data, existingCount)) setStep(1);
+      return;
+    }
 
     setSubmitting(true);
     try {
       await updateListing(id, {
-        title: data.title, description: data.description, basePrice: data.basePrice,
-        condition: data.condition, quantity: data.quantity ?? 1, identMethod: data.identMethod,
-        vin: data.vin, catalogNumber: data.catalogNumber, vehicleType: data.vehicleType,
-        vehicleMakeId: data.vehicleMakeId, vehicleModelId: data.vehicleModelId,
-        vehicleGenId: data.vehicleGenId, vehicleYearRaw: data.vehicleYearRaw,
-        vehicleEngine: data.vehicleEngine, categoryId: data.categoryId,
-        partSide: data.partSide, partDetails: data.partDetails,
+        title: data.title!,
+        description: data.description!,
+        basePrice: data.basePrice!,
+        condition: data.condition!,
+        quantity: data.quantity ?? 1,
+        identMethod: data.identMethod,
+        vin: data.vin,
+        catalogNumber: data.catalogNumber,
+        vehicleType: data.vehicleType,
+        vehicleMakeId: data.vehicleMakeId,
+        vehicleModelId: data.vehicleModelId,
+        vehicleGenId: data.vehicleGenId,
+        vehicleYearRaw: data.vehicleYearRaw,
+        vehicleEngine: data.vehicleEngine,
+        categoryId: data.categoryId!,
+        partSide: data.partSide,
+        partDetails: data.partDetails,
         damageDescription: data.damageDescription,
-        attributes: Object.keys(data.attributes).length > 0 ? data.attributes : undefined,
       });
 
-      const removedIds = listing!.images.filter((img) => !existingImages.some((e) => e.id === img.id)).map((img) => img.id);
-      await Promise.all(removedIds.map((imgId) => deleteImage(id, imgId)));
-      if (data.images.length > 0) await uploadImages(id, data.images);
+      if (data.images.length > 0) {
+        await uploadImages(id, data.images);
+      }
 
-      toast('Ogłoszenie zaktualizowane!', 'success');
+      if (data.selectedPlatforms.length > 0) {
+        try {
+          await publishListing(id, data.selectedPlatforms);
+        } catch (publishErr) {
+          const publishMsg = isAxiosError(publishErr)
+            ? (publishErr.response?.data as { error?: string })?.error
+            : undefined;
+          toast(
+            publishMsg
+              ? `Zapisano, ale publikacja nie powiodła się: ${publishMsg}`
+              : 'Zapisano, ale publikacja na platformach nie powiodła się',
+            'error',
+          );
+          navigate('/listings');
+          return;
+        }
+      }
+
+      toast('Ogłoszenie zostało zaktualizowane', 'success');
       navigate('/listings');
-    } catch {
-      toast('Błąd podczas zapisywania zmian', 'error');
+    } catch (err) {
+      const message = isAxiosError(err)
+        ? (err.response?.data as { error?: string })?.error
+        : undefined;
+      toast(message ?? 'Błąd podczas zapisywania ogłoszenia', 'error');
     } finally {
       setSubmitting(false);
     }
   }
 
-  if (isLoading || !initialized) return <SkeletonWizard />;
+  if (isLoading) return <WizardDraftSkeleton />;
   if (isError || !listing) {
     return (
-      <div className="max-w-2xl mx-auto py-12 text-center">
-        <p className="text-gray-500">Nie znaleziono ogłoszenia.</p>
-        <Button variant="outline" className="mt-4" onClick={() => navigate('/listings')}>Wróć do listy</Button>
+      <div className="mx-auto max-w-2xl py-12 text-center">
+        <p className="text-gray-600">Nie znaleziono ogłoszenia.</p>
+        <Button variant="outline" className="mt-4" onClick={() => navigate('/listings')}>
+          Wróć do listy
+        </Button>
       </div>
     );
   }
 
+  const proceed = canProceed(step, data, existingCount);
+  const showImageError = step === 1 && stepError && !hasMinImages(data, existingCount);
+
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="mx-auto max-w-2xl space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Edytuj ogłoszenie</h1>
-        <p className="text-sm text-gray-500 mt-1 truncate">{listing.title}</p>
+        <p className="mt-1 text-sm text-gray-500">
+          {listing.status === 'DRAFT'
+            ? 'Status „Szkic” — ogłoszenie jest zapisane, ale nieopublikowane na platformach. Wybierz platformy w ostatnim kroku i zapisz, aby wystawić.'
+            : 'Zaktualizuj dane i zapisz zmiany.'}
+        </p>
       </div>
 
       <div className="flex items-center gap-0">
-        {STEPS.map((s, i) => (
-          <div key={i} className="flex items-center flex-1">
-            <button type="button" onClick={() => i < step && setStep(i)} className="flex flex-col items-center gap-1 flex-1">
-              <div className={cn('flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold transition-colors',
-                i < step && 'bg-[var(--navy)] text-white', i === step && 'bg-[var(--navy)] text-white ring-4 ring-[rgba(22,61,110,0.12)]', i > step && 'bg-gray-200 text-gray-500')}>
+        {WIZARD_STEPS.map((s, i) => (
+          <div key={s.label} className="flex flex-1 items-center">
+            <button
+              type="button"
+              onClick={() => {
+                if (i < step) {
+                  setStepError(false);
+                  setStep(i);
+                }
+              }}
+              className="flex flex-1 flex-col items-center gap-1"
+            >
+              <div
+                className={cn(
+                  'flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold transition-colors',
+                  i < step && 'bg-primary-600 text-white',
+                  i === step && 'bg-primary-600 text-white ring-4 ring-primary-100',
+                  i > step && 'bg-gray-200 text-gray-500',
+                )}
+              >
                 {i < step ? <Check className="h-4 w-4" /> : i + 1}
               </div>
-              <span className={cn('text-xs font-medium hidden sm:block', i === step ? 'text-[var(--navy)]' : 'text-gray-500')}>{s.label}</span>
+              <span
+                className={cn(
+                  'hidden text-xs font-medium sm:block',
+                  i === step ? 'text-primary-700' : 'text-gray-500',
+                )}
+              >
+                {s.label}
+              </span>
             </button>
-            {i < STEPS.length - 1 && <div className={cn('h-0.5 flex-1', i < step ? 'bg-[var(--navy)]' : 'bg-gray-200')} />}
+            {i < WIZARD_STEPS.length - 1 && (
+              <div className={cn('h-0.5 flex-1', i < step ? 'bg-primary-600' : 'bg-gray-200')} />
+            )}
           </div>
         ))}
       </div>
 
       <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-gray-900 mb-1">{STEPS[step].label}</h2>
-        <p className="text-sm text-gray-500 mb-6">{STEPS[step].desc}</p>
+        <h2 className="mb-1 text-lg font-semibold text-gray-900">{WIZARD_STEPS[step].label}</h2>
+        <p className="mb-6 text-sm text-gray-500">{WIZARD_STEPS[step].desc}</p>
 
-        {step === 0 && <Step1Category data={data} onChange={patch} />}
-        {isAuto && step === 1 && <Step1Vehicle data={data} onChange={patch} />}
-        {isAuto && step === 2 && <Step2Details data={data} onChange={patch} />}
-        {!isAuto && step === 1 && <Step2FieldsGeneric data={data} onChange={patch} />}
-        {step === STEPS.length - 2 && (
-          <Step3Images data={data} onChange={patch} existingImages={existingImages} onDeleteExisting={(imgId) => setExistingImages((prev) => prev.filter((img) => img.id !== imgId))} />
+        {step === 0 && (
+          <Step2Details data={data} onChange={patch} showValidation={stepError} />
         )}
-        {step === STEPS.length - 1 && <Step4Submit data={data} onChange={patch} />}
+        {step === 1 && (
+          <Step2VehicleAndImages
+            data={data}
+            onChange={patch}
+            showImageError={showImageError}
+            existingImages={existingImages}
+            onRemoveExisting={handleRemoveExisting}
+          />
+        )}
+        {step === 2 && (
+          <Step4Submit data={data} onChange={patch} existingImageCount={existingCount} />
+        )}
       </div>
 
       <div className="flex justify-between">
-        <Button variant="outline" onClick={() => (step === 0 ? navigate('/listings') : setStep(step - 1))}>
-          <ChevronLeft className="h-4 w-4 mr-1" />{step === 0 ? 'Anuluj' : 'Wstecz'}
+        <Button variant="outline" onClick={goBack}>
+          <ChevronLeft className="mr-1 h-4 w-4" />
+          {step === 0 ? 'Anuluj' : 'Wstecz'}
         </Button>
-        {step < STEPS.length - 1 ? (
-          <Button onClick={() => setStep(step + 1)} disabled={!canProceed()}>Dalej <ChevronRight className="h-4 w-4 ml-1" /></Button>
+
+        {step < WIZARD_STEPS.length - 1 ? (
+          <Button onClick={goNext}>
+            Dalej
+            <ChevronRight className="ml-1 h-4 w-4" />
+          </Button>
         ) : (
-          <Button onClick={handleSubmit} disabled={!canProceed() || submitting}>
-            {submitting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Check className="h-4 w-4 mr-2" />}
+          <Button onClick={handleSubmit} disabled={!proceed || submitting}>
+            {submitting ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Check className="mr-2 h-4 w-4" />
+            )}
             {submitting ? 'Zapisywanie...' : 'Zapisz zmiany'}
           </Button>
         )}

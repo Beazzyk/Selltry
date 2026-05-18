@@ -6,7 +6,9 @@ import { getListings, deleteListing, duplicateListing, syncListingStatus } from 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { StatusBadge } from '@/components/listings/StatusBadge';
+import { LocalWizardDraftRow } from '@/components/listings/LocalWizardDraftRow';
 import { useToast } from '@/components/ui/toast';
+import { useLocalWizardDraft } from '@/hooks/useLocalWizardDraft';
 import { Listing, ListingStatus } from '@/types';
 
 const STATUS_FILTERS: { value: ListingStatus | ''; label: string }[] = [
@@ -35,6 +37,7 @@ export default function ListingsPage() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const { meta: localDraft, dismiss: dismissLocalDraft } = useLocalWizardDraft();
 
   const { data, isLoading } = useQuery({
     queryKey: ['listings', search, statusFilter],
@@ -80,6 +83,11 @@ export default function ListingsPage() {
   }
 
   const items = data?.items ?? [];
+  const showLocalDraft =
+    localDraft &&
+    (statusFilter === '' || statusFilter === 'DRAFT') &&
+    (!search || (localDraft.title?.toLowerCase().includes(search.toLowerCase()) ?? true));
+  const isEmpty = !isLoading && items.length === 0 && !showLocalDraft;
 
   return (
     <div className="space-y-4">
@@ -137,13 +145,21 @@ export default function ListingsPage() {
           <tbody>
             {isLoading && [...Array(5)].map((_, i) => <SkeletonRow key={i} />)}
 
-            {!isLoading && items.length === 0 && (
+            {showLocalDraft && localDraft && (
+              <LocalWizardDraftRow draft={localDraft} onDismiss={dismissLocalDraft} />
+            )}
+
+            {isEmpty && (
               <tr>
                 <td colSpan={7} className="px-4 py-16 text-center">
                   <Package className="mx-auto h-10 w-10 text-gray-300 mb-3" />
-                  <p className="text-gray-500">Brak ogłoszeń</p>
+                  <p className="text-gray-500">
+                    {statusFilter === 'DRAFT' ? 'Brak szkiców' : 'Brak ogłoszeń'}
+                  </p>
                   <Button asChild className="mt-3" variant="outline" size="sm">
-                    <Link to="/listings/new">Dodaj pierwsze ogłoszenie</Link>
+                    <Link to="/listings/new">
+                      {statusFilter === 'DRAFT' ? 'Rozpocznij nowy szkic' : 'Dodaj pierwsze ogłoszenie'}
+                    </Link>
                   </Button>
                 </td>
               </tr>
