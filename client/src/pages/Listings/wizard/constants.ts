@@ -11,3 +11,15 @@ export const WIZARD_DRAFT_KEY = 'selltry_listing_wizard_draft';
 export const WIZARD_DRAFT_VERSION = 1;
 export const WIZARD_DRAFT_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 export const WIZARD_DRAFT_DEBOUNCE_MS = 800;
+
+export const AI_PARSER_EXAMPLES = [
+  'Lampa tylna Suzuki Samurai 1990 prawa, używana, oryginał',
+  'Amortyzator przedni lewy BMW E46 2002, stan dobry',
+  'Blok silnika 1.9 TDI VW Golf IV, uszkodzony, nr 038103101A',
+] as const;
+
+export const CONDITION_LABELS: Record<string, string> = {
+  NEW: 'Nowy',
+  USED: 'Używany',
+  DAMAGED: 'Uszkodzony',
+};

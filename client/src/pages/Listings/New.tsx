@@ -15,8 +15,6 @@ import { WizardData, WIZARD_DEFAULTS } from './wizard/types';
 import { WIZARD_STEPS } from './wizard/constants';
 import { canProceed, hasMinImages } from './wizard/validation';
 import { AIParser } from '@/components/shared/AIParser';
-import { mapAiParsedToWizard } from './wizard/utils/mapAiParsed';
-import { ParsedListingData } from '@/api/ai-parser.api';
 import { useWizardDraft } from './wizard/useWizardDraft';
 import { DraftRestoreBanner } from './wizard/DraftRestoreBanner';
 
@@ -52,8 +50,9 @@ export default function NewListingPage() {
     }
   }
 
-  function handleAiParsed(parsed: ParsedListingData) {
-    patch(mapAiParsedToWizard(parsed, categories));
+  function handleAiApply(aiPatch: Partial<WizardData>) {
+    patch(aiPatch);
+    toast('Formularz uzupełniony na podstawie opisu', 'success');
   }
 
   function goNext() {
@@ -133,7 +132,7 @@ export default function NewListingPage() {
         <DraftRestoreBanner draft={pendingDraft} onRestore={restoreDraft} onDismiss={dismissDraft} />
       )}
 
-      <AIParser onParsed={handleAiParsed} />
+      <AIParser categories={categories} vehicleType={data.vehicleType} onApply={handleAiApply} />
 
       <div className="flex items-center gap-0">
         {WIZARD_STEPS.map((s, i) => (
