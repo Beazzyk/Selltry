@@ -7,7 +7,7 @@ import {
   saveWizardDraft,
   WizardDraftMeta,
 } from './draftStorage';
-import { WizardData } from './types';
+import { WizardData, WIZARD_DEFAULTS } from './types';
 
 interface Options {
   step: number;
@@ -16,42 +16,64 @@ interface Options {
 }
 
 export function useWizardDraft({ step, data, onRestore }: Options) {
-  const [pendingDraft, setPendingDraft] = useState<WizardDraftMeta | null>(() => loadDraftMeta());
-  const skipSaveRef = useRef(!!pendingDraft);
+  const [isHydrating, setIsHydrating] = useState(true);
+  const [restoredDraft, setRestoredDraft] = useState<WizardDraftMeta | null>(null);
   const onRestoreRef = useRef(onRestore);
+  const prevStepRef = useRef(step);
   onRestoreRef.current = onRestore;
 
   useEffect(() => {
-    if (skipSaveRef.current) return;
+    let cancelled = false;
+
+    void loadDraft().then((draft) => {
+      if (cancelled) return;
+      if (draft) {
+        onRestoreRef.current(draft.step, draft.data);
+        setRestoredDraft(loadDraftMeta());
+      }
+      setIsHydrating(false);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isHydrating) return;
+
+    if (prevStepRef.current !== step) {
+      prevStepRef.current = step;
+      void saveWizardDraft(step, data);
+      return;
+    }
 
     const timer = window.setTimeout(() => {
       void saveWizardDraft(step, data);
     }, WIZARD_DRAFT_DEBOUNCE_MS);
-    return () => window.clearTimeout(timer);
-  }, [step, data]);
 
-  const restoreDraft = useCallback(async () => {
-    const draft = await loadDraft();
-    if (!draft) {
-      setPendingDraft(null);
-      skipSaveRef.current = false;
-      return;
-    }
-    onRestoreRef.current(draft.step, draft.data);
-    setPendingDraft(null);
-    skipSaveRef.current = false;
-  }, []);
+    return () => window.clearTimeout(timer);
+  }, [step, data, isHydrating]);
+
+  useEffect(() => {
+    if (isHydrating) return;
+    const onLeave = () => {
+      void saveWizardDraft(step, data);
+    };
+    window.addEventListener('beforeunload', onLeave);
+    return () => window.removeEventListener('beforeunload', onLeave);
+  }, [step, data, isHydrating]);
 
   const dismissDraft = useCallback(() => {
     clearWizardDraft();
-    setPendingDraft(null);
-    skipSaveRef.current = false;
+    setRestoredDraft(null);
+    onRestoreRef.current(0, { ...WIZARD_DEFAULTS });
   }, []);
 
   const clearDraft = useCallback(() => {
     clearWizardDraft();
-    setPendingDraft(null);
+    setRestoredDraft(null);
   }, []);
 
-  return { pendingDraft, restoreDraft, dismissDraft, clearDraft };
+  return { isHydrating, restoredDraft, dismissDraft, clearDraft };
 }

@@ -1,4 +1,5 @@
 import { PrismaClient, Platform, VehicleType } from '@prisma/client';
+import { INTERNAL_CATEGORY_TREE } from '../src/constants/internal-categories';
 
 const prisma = new PrismaClient();
 
@@ -34,6 +35,7 @@ async function seedVehicleMakes() {
     { name: 'Seat', models: ['Ibiza', 'Leon', 'Ateca', 'Alhambra'] },
     { name: 'Skoda', models: ['Octavia', 'Fabia', 'Superb', 'Kodiaq', 'Kamiq'] },
     { name: 'Subaru', models: ['Impreza', 'Legacy', 'Forester', 'Outback'] },
+    { name: 'Suzuki', models: ['Samurai', 'Swift', 'Vitara', 'Jimny', 'Ignis', 'SX4'] },
     { name: 'Toyota', models: ['Corolla', 'Avensis', 'Yaris', 'RAV4', 'Hilux'] },
     { name: 'Volkswagen', models: ['Golf', 'Passat', 'Polo', 'Tiguan', 'Touran', 'Transporter', 'Crafter'] },
     { name: 'Volvo', models: ['S40', 'S60', 'S90', 'V70', 'V90', 'XC60', 'XC90'] },
@@ -117,101 +119,7 @@ async function upsertMakeWithType(name: string, type: VehicleType) {
 }
 
 async function seedInternalCategories() {
-  const tree = [
-    {
-      name: 'Silnik',
-      slug: 'engine',
-      children: [
-        { name: 'Blok silnika', slug: 'engine-block' },
-        { name: 'Głowica', slug: 'cylinder-head' },
-        { name: 'Rozrząd', slug: 'timing' },
-        { name: 'Turbosprężarka', slug: 'turbocharger' },
-        { name: 'Alternator', slug: 'alternator' },
-        { name: 'Rozrusznik', slug: 'starter' },
-      ],
-    },
-    {
-      name: 'Skrzynia biegów',
-      slug: 'gearbox',
-      children: [
-        { name: 'Automatyczna', slug: 'gearbox-automatic' },
-        { name: 'Manualna', slug: 'gearbox-manual' },
-      ],
-    },
-    {
-      name: 'Zawieszenie',
-      slug: 'suspension',
-      children: [
-        { name: 'Amortyzatory', slug: 'shock-absorbers' },
-        { name: 'Sprężyny', slug: 'springs' },
-        { name: 'Drążki i wahacze', slug: 'control-arms' },
-      ],
-    },
-    {
-      name: 'Hamulce',
-      slug: 'brakes',
-      children: [
-        { name: 'Tarcze', slug: 'brake-discs' },
-        { name: 'Klocki', slug: 'brake-pads' },
-        { name: 'Zaciski', slug: 'brake-calipers' },
-        { name: 'Przewody', slug: 'brake-lines' },
-      ],
-    },
-    {
-      name: 'Oświetlenie',
-      slug: 'lighting',
-      children: [
-        { name: 'Lampa przednia', slug: 'headlight' },
-        { name: 'Lampa tylna', slug: 'taillight' },
-        { name: 'Kierunkowskaz', slug: 'turn-signal' },
-        { name: 'Lampa przeciwmgłowa', slug: 'fog-lamp' },
-      ],
-    },
-    {
-      name: 'Karoseria',
-      slug: 'bodywork',
-      children: [
-        { name: 'Zderzak', slug: 'bumper' },
-        { name: 'Błotnik', slug: 'fender' },
-        { name: 'Maska', slug: 'hood' },
-        { name: 'Drzwi', slug: 'door' },
-        { name: 'Szyba', slug: 'glass' },
-      ],
-    },
-    {
-      name: 'Elektryka',
-      slug: 'electronics',
-      children: [
-        { name: 'Wiązka elektryczna', slug: 'wiring-harness' },
-        { name: 'Sterownik ECU', slug: 'ecu' },
-        { name: 'Czujniki', slug: 'sensors' },
-      ],
-    },
-    {
-      name: 'Chłodzenie',
-      slug: 'cooling',
-      children: [
-        { name: 'Chłodnica', slug: 'radiator' },
-        { name: 'Wentylator', slug: 'fan' },
-        { name: 'Termostat', slug: 'thermostat' },
-      ],
-    },
-    {
-      name: 'Układ kierowniczy',
-      slug: 'steering',
-      children: [
-        { name: 'Przekładnia', slug: 'steering-rack' },
-        { name: 'Pompa wspomagania', slug: 'power-steering-pump' },
-      ],
-    },
-    {
-      name: 'Inne',
-      slug: 'other',
-      children: [],
-    },
-  ];
-
-  for (const parent of tree) {
+  for (const parent of INTERNAL_CATEGORY_TREE) {
     const parentRecord = await prisma.internalCategory.upsert({
       where: { slug: parent.slug },
       update: {},

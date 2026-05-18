@@ -10,6 +10,15 @@ export async function getCategories(req: Request, res: Response, next: NextFunct
   }
 }
 
+export async function getCategoryMappings(req: Request, res: Response, next: NextFunction) {
+  try {
+    const mappings = await categoryService.getCategoryMappingsExport();
+    res.json(mappings);
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function getVehicleMakes(req: Request, res: Response, next: NextFunction) {
   try {
     const { type } = req.query;

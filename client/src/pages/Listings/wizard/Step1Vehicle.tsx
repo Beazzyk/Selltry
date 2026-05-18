@@ -53,14 +53,20 @@ export function Step1Vehicle({ data, onChange, compact }: Props) {
 
   useEffect(() => {
     if (prevType.current === data.vehicleType) return;
+    const previous = prevType.current;
     prevType.current = data.vehicleType;
-    onChange({ vehicleMakeId: undefined, vehicleModelId: undefined, vehicleGenId: undefined });
+    if (previous !== undefined) {
+      onChange({ vehicleMakeId: undefined, vehicleModelId: undefined, vehicleGenId: undefined });
+    }
   }, [data.vehicleType, onChange]);
 
   useEffect(() => {
     if (prevMake.current === data.vehicleMakeId) return;
+    const previous = prevMake.current;
     prevMake.current = data.vehicleMakeId;
-    onChange({ vehicleModelId: undefined, vehicleGenId: undefined });
+    if (previous !== undefined) {
+      onChange({ vehicleModelId: undefined, vehicleGenId: undefined });
+    }
   }, [data.vehicleMakeId, onChange]);
 
   useEffect(() => {

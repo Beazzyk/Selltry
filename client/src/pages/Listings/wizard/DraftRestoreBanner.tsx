@@ -1,10 +1,9 @@
-import { RotateCcw, X } from 'lucide-react';
+import { CheckCircle2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { WizardDraftMeta } from './draftStorage';
 
 interface Props {
   draft: WizardDraftMeta;
-  onRestore: () => void;
   onDismiss: () => void;
 }
 
@@ -17,26 +16,24 @@ function formatSavedAt(date: Date): string {
   });
 }
 
-export function DraftRestoreBanner({ draft, onRestore, onDismiss }: Props) {
+export function DraftRestoreBanner({ draft, onDismiss }: Props) {
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 sm:flex-row sm:items-center sm:justify-between">
-      <div className="min-w-0">
-        <p className="text-sm font-medium text-amber-900">Masz zapisany szkic</p>
-        <p className="mt-0.5 text-xs text-amber-800">
-          Ostatni zapis: {formatSavedAt(draft.savedAt)}
-          {draft.imagesOmitted && ' (zdjęcia nie zostały zapisane — limit pamięci przeglądarki)'}
-        </p>
+    <div className="flex flex-col gap-3 rounded-xl border border-green-200 bg-green-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex min-w-0 items-start gap-2">
+        <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-green-600" />
+        <div>
+          <p className="text-sm font-medium text-green-900">Szkic został przywrócony</p>
+          <p className="mt-0.5 text-xs text-green-800">
+            {draft.title ? `„${draft.title}” · ` : ''}
+            krok {draft.step + 1} · zapis {formatSavedAt(draft.savedAt)}
+            {draft.imagesOmitted && ' · zdjęcia wymagają ponownego dodania'}
+          </p>
+        </div>
       </div>
-      <div className="flex shrink-0 gap-2">
-        <Button type="button" size="sm" onClick={onRestore}>
-          <RotateCcw className="mr-1 h-3.5 w-3.5" />
-          Przywróć
-        </Button>
-        <Button type="button" size="sm" variant="outline" onClick={onDismiss}>
-          <X className="mr-1 h-3.5 w-3.5" />
-          Odrzuć
-        </Button>
-      </div>
+      <Button type="button" size="sm" variant="outline" onClick={onDismiss} className="shrink-0">
+        <X className="mr-1 h-3.5 w-3.5" />
+        Zacznij od nowa
+      </Button>
     </div>
   );
 }

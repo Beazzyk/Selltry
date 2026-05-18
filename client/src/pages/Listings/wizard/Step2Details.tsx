@@ -11,6 +11,7 @@ import { MIN_DESCRIPTION_LENGTH } from './constants';
 interface Props {
   data: WizardData;
   onChange: (patch: Partial<WizardData>) => void;
+  showValidation?: boolean;
 }
 
 const CONDITIONS: { value: Condition; label: string; desc: string }[] = [
@@ -21,7 +22,8 @@ const CONDITIONS: { value: Condition; label: string; desc: string }[] = [
 
 const PART_SIDES = ['Lewa', 'Prawa', 'Nie dotyczy'];
 
-export function Step2Details({ data, onChange }: Props) {
+export function Step2Details({ data, onChange, showValidation }: Props) {
+  const missingCategory = showValidation && !data.categoryId;
   const [selectedParentId, setSelectedParentId] = useState<string>('');
   const { data: categoryTree = [] } = useQuery({
     queryKey: ['categories'],
@@ -78,7 +80,10 @@ export function Step2Details({ data, onChange }: Props) {
             <select
               value={selectedParent?.id ?? ''}
               onChange={(e) => handleParentChange(e.target.value)}
-              className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className={cn(
+                'w-full rounded-md border bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500',
+                missingCategory ? 'border-red-400 ring-1 ring-red-200' : 'border-gray-300',
+              )}
             >
               <option value="">Wybierz kategorię</option>
               {categoryTree.map((c) => (
@@ -93,7 +98,10 @@ export function Step2Details({ data, onChange }: Props) {
               <select
                 value={data.categoryId ?? ''}
                 onChange={(e) => onChange({ categoryId: e.target.value || undefined })}
-                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className={cn(
+                  'w-full rounded-md border bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500',
+                  missingCategory ? 'border-red-400 ring-1 ring-red-200' : 'border-gray-300',
+                )}
               >
                 <option value="">Wybierz podkategorię</option>
                 {children.map((c) => (
@@ -103,6 +111,9 @@ export function Step2Details({ data, onChange }: Props) {
             </div>
           )}
         </div>
+        {missingCategory && (
+          <p className="mt-2 text-sm text-red-600">Wybierz kategorię, aby przejść dalej.</p>
+        )}
       </div>
 
       {/* Strona montażu */}

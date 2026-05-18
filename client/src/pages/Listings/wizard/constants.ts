@@ -23,3 +23,10 @@ export const CONDITION_LABELS: Record<string, string> = {
   USED: 'Używany',
   DAMAGED: 'Uszkodzony',
 };
+
+/** Etykiety stanu w podsumowaniu (forma żeńska — część samochodowa) */
+export const CONDITION_PART_LABELS: Record<string, string> = {
+  NEW: 'nowa',
+  USED: 'używana',
+  DAMAGED: 'uszkodzona',
+};

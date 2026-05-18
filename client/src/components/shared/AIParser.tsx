@@ -34,7 +34,11 @@ export function AIParser({ categories, vehicleType, onApply }: Props) {
       const patch = mapAiParsedToWizard(result, categories, text);
       const vehiclePatch = await resolveVehicleFromParsed(result, vehicleType);
 
-      const fullPatch: Partial<WizardData> = { ...patch, ...vehiclePatch };
+      const fullPatch: Partial<WizardData> = {
+        ...patch,
+        ...vehiclePatch,
+        vehicleType: vehiclePatch.vehicleType ?? vehicleType,
+      };
       setParsed(result);
       setLastTitle(fullPatch.title);
       onApply(fullPatch);

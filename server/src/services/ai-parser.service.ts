@@ -2,6 +2,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { Condition } from '@prisma/client';
 import { prisma } from '../utils/prisma';
 import { env } from '../utils/env';
+import { extractVehicleFromText } from './ai-parser-vehicle';
 
 export interface ParsedListingData {
   vehicleMake: string | null;
@@ -32,7 +33,9 @@ export async function parseInput(rawInput: string): Promise<ParsedListingData> {
   const sub = categories.filter((c) => !!c.parentId).map((c) => c.slug);
 
   const prompt = [
-    'Z parsowanego tekstu zwroc JSON zgodny ze schematem.',
+    'Z parsowanego tekstu zwroc JSON (tylko JSON, bez komentarzy).',
+    'Pola: vehicleMake, vehicleModel, vehicleYear (number), partCategory (slug), partSubcategory (slug),',
+    'partSide ("Lewa"|"Prawa"|null), condition ("NEW"|"USED"|"DAMAGED"|null), catalogNumber, confidence (0-1).',
     'Uzyj tylko podanych slugow kategorii.',
     `Kategorie glowne: ${top.join(', ')}`,
     `Podkategorie: ${sub.join(', ')}`,
@@ -49,13 +52,20 @@ export async function parseInput(rawInput: string): Promise<ParsedListingData> {
   const text = completion.content.find((part) => part.type === 'text');
   const parsed = safeParseJson(text?.text ?? '');
   if (!parsed) return parseWithRegex(rawInput);
-  return normalizeResult(parsed);
+  const normalized = normalizeResult(parsed);
+  if (!normalized.vehicleMake) {
+    const vehicle = extractVehicleFromText(rawInput);
+    normalized.vehicleMake = vehicle.vehicleMake;
+    normalized.vehicleModel = vehicle.vehicleModel ?? normalized.vehicleModel;
+  }
+  return normalized;
 }
 
 export function parseWithRegex(rawInput: string): ParsedListingData {
   const lower = rawInput.toLowerCase();
   const yearMatch = lower.match(/\b(19|20)\d{2}\b/);
   const catalogMatch = rawInput.match(/\b[A-Z0-9-]{5,}\b/);
+  const vehicle = extractVehicleFromText(rawInput);
 
   const side: 'Lewa' | 'Prawa' | null = lower.includes('lewa') || lower.includes('lewy')
     ? 'Lewa'
@@ -63,23 +73,28 @@ export function parseWithRegex(rawInput: string): ParsedListingData {
       ? 'Prawa'
       : null;
 
-  const condition: Condition | null = lower.includes('nowa')
+  const condition: Condition | null = lower.includes('nowa') || lower.includes('nowy')
     ? 'NEW'
     : lower.includes('uszk')
       ? 'DAMAGED'
-      : 'USED';
+      : lower.includes('używ') || lower.includes('uzyw')
+        ? 'USED'
+        : null;
+
+  const hasVehicle = !!(vehicle.vehicleMake || vehicle.vehicleModel);
+  const confidence = hasVehicle ? 0.55 : 0.4;
 
   return {
-    vehicleMake: null,
-    vehicleModel: null,
+    vehicleMake: vehicle.vehicleMake,
+    vehicleModel: vehicle.vehicleModel,
     vehicleYear: yearMatch ? Number(yearMatch[0]) : null,
     partCategory: null,
     partSubcategory: null,
     partSide: side,
     condition,
     catalogNumber: catalogMatch ? catalogMatch[0] : null,
-    confidence: 0.4,
-    needsReview: true,
+    confidence,
+    needsReview: confidence < 0.6,
     parserMode: 'REGEX',
   };
 }

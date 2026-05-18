@@ -1,6 +1,7 @@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { WizardData } from './types';
+import { CONDITION_PART_LABELS } from './constants';
 import { Platform } from '@/types';
 import { useQuery } from '@tanstack/react-query';
 import { getPlatforms } from '@/api/platforms.api';
@@ -11,13 +12,16 @@ const PLATFORMS: Platform[] = ['ALLEGRO', 'OVOKO', 'OTOMOTO', 'OLX', 'EBAY'];
 interface Props {
   data: WizardData;
   onChange: (patch: Partial<WizardData>) => void;
+  existingImageCount?: number;
 }
 
-export function Step4Submit({ data, onChange }: Props) {
+export function Step4Submit({ data, onChange, existingImageCount = 0 }: Props) {
   const { data: platforms = [] } = useQuery({ queryKey: ['platforms'], queryFn: getPlatforms });
   const { data: margins = [] } = useQuery({ queryKey: ['margins'], queryFn: getMarginRules });
 
   const activePlatforms = new Set(platforms.filter((platform) => platform.isActive).map((platform) => platform.platform));
+  const imageCount = existingImageCount + data.images.length;
+  const conditionLabel = data.condition ? CONDITION_PART_LABELS[data.condition] ?? data.condition : '—';
 
   return (
     <div className="space-y-6">
@@ -93,9 +97,11 @@ export function Step4Submit({ data, onChange }: Props) {
           <dt className="text-gray-500">Tytuł</dt>
           <dd className="text-gray-900 truncate">{data.title ?? '—'}</dd>
           <dt className="text-gray-500">Stan</dt>
-          <dd className="text-gray-900">{data.condition ?? '—'}</dd>
+          <dd className="text-gray-900">{conditionLabel}</dd>
           <dt className="text-gray-500">Zdjęcia</dt>
-          <dd className="text-gray-900">{data.images.length} szt.</dd>
+          <dd className="text-gray-900">{imageCount}</dd>
+          <dt className="text-gray-500">Ilość sztuk</dt>
+          <dd className="text-gray-900">{data.quantity ?? 1} szt.</dd>
           <dt className="text-gray-500">Cena bazowa</dt>
           <dd className="text-gray-900 font-semibold">
             {data.basePrice ? `${data.basePrice.toFixed(2)} PLN` : '—'}

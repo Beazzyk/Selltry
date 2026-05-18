@@ -28,6 +28,44 @@ function findCategoryId(
   return undefined;
 }
 
+const CATEGORY_HINTS: { pattern: RegExp; parent: string; child: string }[] = [
+  { pattern: /lamp[aęy].*ty[lł]|ty[lł].*lamp/i, parent: 'lighting', child: 'taillight' },
+  { pattern: /lamp[aęy].*przed|przedni.*lamp/i, parent: 'lighting', child: 'headlight' },
+  { pattern: /kierunkowskaz/i, parent: 'lighting', child: 'turn-signal' },
+  { pattern: /amortyzator/i, parent: 'suspension', child: 'shock-absorbers' },
+  { pattern: /tarcz[aęy].*hamul|hamul.*tarcz/i, parent: 'brakes', child: 'brake-discs' },
+  { pattern: /klock/i, parent: 'brakes', child: 'brake-pads' },
+  { pattern: /zacisk/i, parent: 'brakes', child: 'brake-calipers' },
+  { pattern: /zderzak/i, parent: 'bodywork', child: 'bumper' },
+  { pattern: /błotnik/i, parent: 'bodywork', child: 'fender' },
+  { pattern: /maska/i, parent: 'bodywork', child: 'hood' },
+  { pattern: /chłodnic/i, parent: 'cooling', child: 'radiator' },
+  { pattern: /turbo/i, parent: 'engine', child: 'turbocharger' },
+  { pattern: /alternator/i, parent: 'engine', child: 'alternator' },
+];
+
+function findCategoryIdFromText(tree: InternalCategory[], text: string): string | undefined {
+  const lower = text.toLowerCase();
+
+  for (const hint of CATEGORY_HINTS) {
+    if (!hint.pattern.test(lower)) continue;
+    const id = findCategoryId(tree, hint.parent, hint.child);
+    if (id) return id;
+  }
+
+  for (const parent of tree) {
+    for (const child of parent.children ?? []) {
+      const childName = child.name.toLowerCase();
+      if (lower.includes(childName)) return child.id;
+    }
+    if (lower.includes(parent.name.toLowerCase()) && !parent.children?.length) {
+      return parent.id;
+    }
+  }
+
+  return undefined;
+}
+
 export function getCategoryLabel(
   tree: InternalCategory[],
   categorySlug: string | null,
@@ -86,7 +124,9 @@ export function mapAiParsedToWizard(
   categories: InternalCategory[],
   rawInput: string,
 ): Partial<WizardData> {
-  const categoryId = findCategoryId(categories, parsed.partCategory, parsed.partSubcategory);
+  const categoryId =
+    findCategoryId(categories, parsed.partCategory, parsed.partSubcategory) ??
+    findCategoryIdFromText(categories, rawInput);
 
   const patch: Partial<WizardData> = {
     identMethod: 'AI_PARSED',
