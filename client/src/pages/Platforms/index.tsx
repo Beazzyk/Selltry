@@ -21,11 +21,11 @@ import { getRequestErrorMessage } from '@/lib/errors';
 
 type ActivePlatform = Exclude<Platform, 'EBAY'>;
 
-const PLATFORM_META: Record<ActivePlatform, { label: string; bg: string; initials: string }> = {
+const PLATFORM_META: Record<ActivePlatform, { label: string; bg: string; initials: string; comingSoon?: boolean; comingSoonNote?: string }> = {
   ALLEGRO: { label: 'Allegro', bg: 'bg-orange-500', initials: 'AL' },
-  OVOKO: { label: 'Ovoko', bg: 'bg-emerald-600', initials: 'OV' },
-  OTOMOTO: { label: 'Otomoto', bg: 'bg-[var(--pf-otomoto)]', initials: 'OT' },
-  OLX: { label: 'OLX', bg: 'bg-lime-500', initials: 'OLX' },
+  OLX:     { label: 'OLX',     bg: 'bg-lime-500',   initials: 'OLX' },
+  OTOMOTO: { label: 'Otomoto', bg: 'bg-[var(--pf-otomoto)]', initials: 'OT', comingSoon: true, comingSoonNote: 'Wymaga umowy partnerskiej z OLX Group' },
+  OVOKO:   { label: 'Ovoko',   bg: 'bg-emerald-600', initials: 'OV', comingSoon: true, comingSoonNote: 'Integracja w przygotowaniu' },
 };
 
 const PLATFORMS: ActivePlatform[] = ['ALLEGRO', 'OVOKO', 'OTOMOTO', 'OLX'];
@@ -136,6 +136,25 @@ export default function PlatformsPage() {
           const meta = PLATFORM_META[platform];
           const active = !!data.find((item) => item.platform === platform)?.isActive;
           const isTesting = testMut.isPending && testMut.variables === platform;
+
+          if (meta.comingSoon) {
+            return (
+              <div key={platform} className="flex flex-col items-center rounded-2xl border border-dashed border-gray-200 bg-gray-50/50 p-5 gap-4 opacity-70">
+                <div className={`flex h-16 w-16 items-center justify-center rounded-2xl ${meta.bg} text-white font-bold text-lg select-none opacity-60`}>
+                  {meta.initials}
+                </div>
+                <div className="text-center">
+                  <p className="font-semibold text-gray-700">{meta.label}</p>
+                  <span className="inline-flex items-center gap-1 text-xs font-medium mt-1 text-amber-600">
+                    Wkrótce
+                  </span>
+                  {meta.comingSoonNote && (
+                    <p className="text-[10px] text-gray-400 mt-1 leading-tight">{meta.comingSoonNote}</p>
+                  )}
+                </div>
+              </div>
+            );
+          }
 
           return (
             <div key={platform} className="flex flex-col items-center rounded-2xl border border-gray-200 bg-white p-5 shadow-sm gap-4 transition-shadow hover:shadow-md">
