@@ -29,7 +29,7 @@ export default function NewListingPage() {
 
   const { data: categories = [] } = useQuery({
     queryKey: ['categories'],
-    queryFn: getCategories,
+    queryFn: () => getCategories(),
   });
 
   const handleRestore = useCallback((restoredStep: number, restoredData: WizardData) => {
@@ -74,8 +74,6 @@ export default function NewListingPage() {
     else setStep((s) => s - 1);
   }
 
-  const isPublishing = data.selectedPlatforms.length > 0;
-
   async function handleSubmit() {
     if (!canProceed(2, data)) {
       setStepError(true);
@@ -110,8 +108,7 @@ export default function NewListingPage() {
         await uploadImages(listing.id, data.images);
       }
 
-      if (data.images.length > 0) await uploadImages(listingId, data.images);
-      if (data.selectedPlatforms.length > 0) await publishListing(listingId, data.selectedPlatforms);
+      if (data.selectedPlatforms.length > 0) await publishListing(listing.id, data.selectedPlatforms);
 
       clearDraft();
       toast('Ogłoszenie zostało zapisane!', 'success');

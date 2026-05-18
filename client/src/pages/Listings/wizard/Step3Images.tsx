@@ -4,7 +4,6 @@ import { cn } from '@/lib/utils';
 import { ListingImage } from '@/types';
 import { MIN_IMAGES } from './constants';
 import { WizardData } from './types';
-import { ListingImage } from '@/types';
 
 interface Props {
   data: WizardData;

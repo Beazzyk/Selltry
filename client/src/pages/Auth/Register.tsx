@@ -5,7 +5,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { register as registerApi, getMe } from '@/api/auth.api';
 import { useAuthStore } from '@/store/auth.store';
 import { useToast } from '@/components/ui/toast';
-import { SelltryLogo } from '@/pages/Landing/SelltryLogo';
 
 const schema = z.object({
   name: z.string().min(2, 'Imię musi mieć co najmniej 2 znaki'),
@@ -37,7 +36,7 @@ export default function RegisterPage() {
       <div className="w-full max-w-md space-y-8 rounded-xl bg-white p-8 shadow-sm border border-gray-200">
         <div className="text-center">
           <Link to="/" className="font-display text-2xl font-bold text-gray-900 hover:text-primary-600">
-            AutoLister
+            Selltry
           </Link>
           <p className="mt-2 text-sm text-gray-600">Utwórz nowe konto</p>
         </div>

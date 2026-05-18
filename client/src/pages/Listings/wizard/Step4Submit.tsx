@@ -2,12 +2,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { WizardData } from './types';
 import { CONDITION_PART_LABELS } from './constants';
-import { Platform } from '@/types';
 import { useQuery } from '@tanstack/react-query';
 import { getPlatforms } from '@/api/platforms.api';
 import { getMarginRules } from '@/api/margins.api';
 import { PlatformCategoryPicker } from './PlatformCategoryPicker';
 import { CATEGORY_SYNC_PLATFORMS } from '@/constants';
+import { getPlatformsForCategory } from './types';
 
 interface Props {
   data: WizardData;
@@ -20,6 +20,8 @@ export function Step4Submit({ data, onChange, existingImageCount = 0 }: Props) {
   const { data: margins = [] } = useQuery({ queryKey: ['margins'], queryFn: getMarginRules });
 
   const activePlatforms = new Set(platforms.filter((platform) => platform.isActive).map((platform) => platform.platform));
+  const allowedPlatforms = getPlatformsForCategory(data.categoryType);
+  const syncedPlatforms = data.selectedPlatforms.filter((p) => CATEGORY_SYNC_PLATFORMS.includes(p));
   const imageCount = existingImageCount + data.images.length;
   const conditionLabel = data.condition ? CONDITION_PART_LABELS[data.condition] ?? data.condition : '—';
 

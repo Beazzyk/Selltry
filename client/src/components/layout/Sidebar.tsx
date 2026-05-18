@@ -1,11 +1,9 @@
-import { Link, NavLink } from 'react-router-dom';
-import { Home, LayoutDashboard, Package, PlugZap, Settings, ShoppingCart, LogOut } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { Home, LayoutDashboard, Package, PlugZap, Settings, ShoppingCart } from 'lucide-react';
 import { logout } from '@/api/auth.api';
 import { useAuthStore } from '@/store/auth.store';
-import { SelltryLogo } from '@/pages/Landing/SelltryLogo';
 
-const NAV_ITEMS = [
+const MAIN_NAV = [
   { to: '/', label: 'Strona główna', icon: Home },
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/listings', label: 'Ogłoszenia', icon: Package },
@@ -42,16 +40,16 @@ export function Sidebar({ onNavigate }: Props) {
     <aside className="flex h-full w-60 flex-col bg-gray-900 text-white">
       <div className="flex h-16 items-center border-b border-gray-800 px-6">
         <Link to="/" className="text-lg font-bold text-white hover:text-amber-400">
-          AutoLister
+          Selltry
         </Link>
       </div>
 
       <nav className="sb-section">
         <span className="sb-sec-label">Główne</span>
-        {MAIN_NAV.map(({ to, label, icon }) => (
+        {MAIN_NAV.map(({ to, label, icon: Icon }) => (
           <NavLink key={to} to={to} onClick={onNavigate} end={to === '/dashboard'}
             className={({ isActive }) => `sb-link${isActive ? ' active' : ''}`}>
-            {icon}{label}
+            <Icon className="h-4 w-4" />{label}
           </NavLink>
         ))}
       </nav>

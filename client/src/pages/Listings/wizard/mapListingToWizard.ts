@@ -26,6 +26,8 @@ export function mapListingToWizard(listing: Listing): WizardData {
     basePrice: Number(listing.basePrice),
     quantity: listing.quantity,
     selectedPlatforms: listing.platformListings.map((item) => item.platform),
+    attributes: {},
+    platformCategories: {},
     images: [],
   };
 }

@@ -164,6 +164,8 @@ export async function saveWizardDraft(step: number, data: WizardData): Promise<v
       basePrice: data.basePrice,
       quantity: data.quantity,
       selectedPlatforms: data.selectedPlatforms,
+      attributes: data.attributes,
+      platformCategories: data.platformCategories,
     },
     images: [],
   };

@@ -1,11 +1,13 @@
-import { Loader2, Sparkles } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { getCategories } from '@/api/categories.api';
 import { WizardData } from './types';
 import { Condition } from '@/types';
 import { MIN_DESCRIPTION_LENGTH } from './constants';
+import { PlatformTitleSuggestions } from '@/components/listings/PlatformTitleSuggestions';
 
 interface Props {
   data: WizardData;
@@ -26,7 +28,7 @@ export function Step2Details({ data, onChange, showValidation }: Props) {
   const [selectedParentId, setSelectedParentId] = useState<string>('');
   const { data: categoryTree = [] } = useQuery({
     queryKey: ['categories'],
-    queryFn: getCategories,
+    queryFn: () => getCategories(),
   });
 
   const selectedParent = categoryTree.find((c) => c.id === selectedParentId);
@@ -52,20 +54,6 @@ export function Step2Details({ data, onChange, showValidation }: Props) {
     } else {
       onChange({ categoryId: parentId });
     }
-  }
-
-  function autoGenerateTitle() {
-    const parts: string[] = [];
-    if (data.categoryId) {
-      const cat = categoryTree
-        .flatMap((c) => [c, ...(c.children ?? [])])
-        .find((c) => c.id === data.categoryId);
-      if (cat) parts.push(cat.name);
-    }
-    if (data.partSide && data.partSide !== 'Nie dotyczy') parts.push(data.partSide.toLowerCase());
-    if (data.condition === 'USED') parts.push('używana');
-    if (data.condition === 'DAMAGED') parts.push('uszkodzona');
-    onChange({ title: parts.join(' ') });
   }
 
   return (
