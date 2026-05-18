@@ -1,7 +1,7 @@
 import { Platform } from '@prisma/client';
 import { env } from '../../utils/env';
-import { BasePlatformService, ListingWithRelations, PublishResult } from './base.platform.service';
-import { mockPublish } from './helpers';
+import { BasePlatformService, ListingWithRelations, PublishResult, SyncStatusResult } from './base.platform.service';
+import { mockPublish, mockSync } from './helpers';
 
 export class OvokoService extends BasePlatformService {
   platform: Platform = 'OVOKO';
@@ -12,7 +12,15 @@ export class OvokoService extends BasePlatformService {
     return mockPublish(this.platform, 'https://ovoko.pl/oferta');
   }
 
+  protected async _mockSync(externalId: string): Promise<SyncStatusResult> {
+    return mockSync(externalId);
+  }
+
   protected async _realPublish(_listing: ListingWithRelations, _categoryId: string): Promise<PublishResult> {
     throw new Error('Real Ovoko API not implemented yet');
+  }
+
+  protected async _realSync(_externalId: string, _userId: string): Promise<SyncStatusResult> {
+    throw new Error('Real Ovoko sync not implemented yet');
   }
 }

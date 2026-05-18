@@ -76,7 +76,9 @@ export async function getValidAccessToken(userId: string): Promise<string> {
   });
   if (!record?.accessToken) throw new AppError(400, 'eBay access token missing. Connect eBay first.');
   if (isExpiringSoon(record.tokenExpiry) && record.refreshToken) {
-    const refreshed = await requestTokensByRefresh(tryDecrypt(record.refreshToken)!);
+    const decryptedRefresh = tryDecrypt(record.refreshToken);
+    if (!decryptedRefresh) throw new AppError(400, 'eBay refresh token is corrupted. Reconnect eBay.');
+    const refreshed = await requestTokensByRefresh(decryptedRefresh);
     await storeTokens(
       userId,
       Platform.EBAY,
@@ -86,7 +88,9 @@ export async function getValidAccessToken(userId: string): Promise<string> {
     );
     return refreshed.access_token;
   }
-  return tryDecrypt(record.accessToken)!;
+  const decryptedAccess = tryDecrypt(record.accessToken);
+  if (!decryptedAccess) throw new AppError(400, 'eBay access token is corrupted. Reconnect eBay.');
+  return decryptedAccess;
 }
 
 function verifyState(state: string): OAuthStatePayload {

@@ -4,6 +4,7 @@ import { authMiddleware } from '../middleware/auth.middleware';
 import { aiParserRateLimit } from '../middleware/rate-limit.middleware';
 import * as ctrl from '../controllers/listing.controller';
 import * as aiParserCtrl from '../controllers/ai-parser.controller';
+import * as descCtrl from '../controllers/description.controller';
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -21,9 +22,12 @@ router.use(authMiddleware);
 router.get('/', ctrl.getListings);
 router.post('/', ctrl.createListing);
 router.post('/parse-input', aiParserRateLimit, aiParserCtrl.parseListingInput);
+router.post('/generate-description', aiParserRateLimit, descCtrl.generateListingDescription);
+router.post('/:id/generate-description', aiParserRateLimit, descCtrl.generateFromExistingListing);
 router.get('/:id/titles', ctrl.getListingTitles);
 router.post('/:id/publish', ctrl.publishListing);
 router.get('/:id/publish-status', ctrl.getPublishStatus);
+router.post('/:id/sync', ctrl.syncStatus);
 router.get('/:id', ctrl.getListing);
 router.put('/:id', ctrl.updateListing);
 router.delete('/:id', ctrl.deleteListing);

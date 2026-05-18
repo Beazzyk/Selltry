@@ -3,6 +3,8 @@ import { AppError } from '../middleware/error.middleware';
 import { env } from '../utils/env';
 import { getPresignedUrl } from './image.service';
 import { getValidAccessToken } from './otomoto-oauth.service';
+import { RawPlatformCategory } from '../types/platform.types';
+import { flattenCategoryTree } from '../utils/category.utils';
 
 const BASE_URL = 'https://www.otomoto.pl/api/open';
 
@@ -67,6 +69,16 @@ export async function getCategory(userId: string, categoryId: string): Promise<O
   return otomotoRequest<OtomotoCategoryResponse>(token, 'GET', `/categories/${encodeURIComponent(categoryId)}`);
 }
 
+export async function getAccountAdvert(
+  userId: string,
+  advertId: string,
+): Promise<{ id?: unknown; status?: unknown; url?: unknown }> {
+  const token = await getValidAccessToken(userId);
+  return otomotoRequest<{ id?: unknown; status?: unknown; url?: unknown }>(
+    token, 'GET', `/account/adverts/${encodeURIComponent(advertId)}`,
+  );
+}
+
 export async function getAccountAdverts(userId: string): Promise<OtomotoAdvertsResponse> {
   const token = await getValidAccessToken(userId);
   return otomotoRequest<OtomotoAdvertsResponse>(token, 'GET', '/account/adverts');
@@ -100,6 +112,23 @@ async function otomotoRequest<T>(
       axiosError.message;
     throw new AppError(status, `Otomoto API error: ${message}`);
   }
+}
+
+interface OtomotoCategoryListItem {
+  id: string | number;
+  name: string;
+  children?: OtomotoCategoryListItem[];
+}
+
+interface OtomotoCategoryListResponse {
+  data?: OtomotoCategoryListItem[];
+  [key: string]: unknown;
+}
+
+export async function fetchAllOtomotoCategories(userId: string): Promise<RawPlatformCategory[]> {
+  const token = await getValidAccessToken(userId);
+  const response = await otomotoRequest<OtomotoCategoryListResponse>(token, 'GET', '/categories', undefined);
+  return flattenCategoryTree(response.data ?? []);
 }
 
 export function buildAdvertPayload(params: {

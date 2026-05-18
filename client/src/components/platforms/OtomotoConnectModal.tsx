@@ -20,7 +20,11 @@ export function OtomotoConnectModal({
   const [password, setPassword] = useState('');
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      setUsername('');
+      setPassword('');
+      return;
+    }
     function handleEscape(event: KeyboardEvent) {
       if (event.key === 'Escape' && !isSubmitting) {
         onClose();

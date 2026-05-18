@@ -1,4 +1,5 @@
 export type Plan = 'FREE' | 'PRO' | 'BUSINESS';
+export type CategoryType = 'AUTOMOTIVE' | 'ELECTRONICS' | 'HOME_GARDEN' | 'FASHION' | 'SPORT' | 'TOOLS' | 'OTHER';
 export type Platform = 'ALLEGRO' | 'OVOKO' | 'OTOMOTO' | 'OLX' | 'EBAY';
 export type VehicleType = 'CAR' | 'MOTORCYCLE' | 'TRUCK' | 'OTHER';
 export type Condition = 'NEW' | 'USED' | 'DAMAGED';
@@ -42,6 +43,7 @@ export interface InternalCategory {
   name: string;
   slug: string;
   parentId: string | null;
+  categoryType: CategoryType;
   children?: InternalCategory[];
 }
 

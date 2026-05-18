@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Search, Package, Copy, Pencil, Trash2 } from 'lucide-react';
-import { getListings, deleteListing, duplicateListing } from '@/api/listings.api';
+import { Plus, Search, Package, Copy, Pencil, Trash2, RefreshCw } from 'lucide-react';
+import { getListings, deleteListing, duplicateListing, syncListingStatus } from '@/api/listings.api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { StatusBadge } from '@/components/listings/StatusBadge';
@@ -67,6 +67,16 @@ export default function ListingsPage() {
     onError: () => toast('Błąd podczas duplikowania', 'error'),
   });
 
+  const syncMutation = useMutation({
+    mutationFn: (id: string) => syncListingStatus(id),
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ['listings'] });
+      const synced = data.results.filter((r) => r.synced).length;
+      toast(`Zsynchronizowano ${synced}/${data.results.length} platform`, 'success');
+    },
+    onError: () => toast('Błąd synchronizacji statusów', 'error'),
+  });
+
   function handleDelete(listing: Listing) {
     if (!confirm(`Usunąć ogłoszenie "${listing.title}"?`)) return;
     deleteMutation.mutate(listing.id);
@@ -108,8 +118,8 @@ export default function ListingsPage() {
               onClick={() => setStatusFilter(value)}
               className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                 statusFilter === value
-                  ? 'bg-primary-600 text-white'
-                  : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                  ? 'bg-[var(--navy)] text-white'
+                  : 'bg-white border border-[var(--border-2)] text-[var(--ink-2)] hover:bg-[var(--bg-2)]'
               }`}
             >
               {label}
@@ -128,6 +138,7 @@ export default function ListingsPage() {
               <th className="px-4 py-3 text-left font-medium text-gray-600">Stan</th>
               <th className="px-4 py-3 text-left font-medium text-gray-600">Cena bazowa</th>
               <th className="px-4 py-3 text-left font-medium text-gray-600">Status</th>
+              <th className="px-4 py-3 text-left font-medium text-gray-600">Platformy</th>
               <th className="px-4 py-3 text-right font-medium text-gray-600">Akcje</th>
             </tr>
           </thead>
@@ -140,7 +151,7 @@ export default function ListingsPage() {
 
             {isEmpty && (
               <tr>
-                <td colSpan={6} className="px-4 py-16 text-center">
+                <td colSpan={7} className="px-4 py-16 text-center">
                   <Package className="mx-auto h-10 w-10 text-gray-300 mb-3" />
                   <p className="text-gray-500">
                     {statusFilter === 'DRAFT' ? 'Brak szkiców' : 'Brak ogłoszeń'}
@@ -185,7 +196,35 @@ export default function ListingsPage() {
                   <StatusBadge status={listing.status} />
                 </td>
                 <td className="px-4 py-3">
+                  <div className="flex flex-wrap gap-1">
+                    {listing.platformListings.length === 0 ? (
+                      <span className="text-xs text-gray-400">Szkic</span>
+                    ) : (
+                      listing.platformListings.map((pl) => (
+                        <span key={pl.platform} className={`inline-flex items-center text-[10px] font-medium px-1.5 py-0.5 rounded ${
+                          pl.status === 'ACTIVE'  ? 'bg-green-100 text-green-700' :
+                          pl.status === 'ERROR'   ? 'bg-red-100 text-red-600' :
+                          pl.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' :
+                          'bg-gray-100 text-gray-500'
+                        }`}>
+                          {pl.platform}
+                        </span>
+                      ))
+                    )}
+                  </div>
+                </td>
+                <td className="px-4 py-3">
                   <div className="flex justify-end gap-1">
+                    {listing.status === 'ACTIVE' || listing.status === 'PARTIALLY_ACTIVE' ? (
+                      <button
+                        onClick={() => syncMutation.mutate(listing.id)}
+                        disabled={syncMutation.isPending && syncMutation.variables === listing.id}
+                        className="p-1.5 rounded hover:bg-[var(--bg-2)] text-[var(--navy)] disabled:opacity-50"
+                        title="Synchronizuj statusy"
+                      >
+                        <RefreshCw className={`h-4 w-4 ${syncMutation.isPending && syncMutation.variables === listing.id ? 'animate-spin' : ''}`} />
+                      </button>
+                    ) : null}
                     <button
                       onClick={() => navigate(`/listings/${listing.id}/edit`)}
                       className="p-1.5 rounded hover:bg-gray-100 text-gray-600"

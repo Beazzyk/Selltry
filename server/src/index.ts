@@ -8,6 +8,7 @@ import { errorMiddleware } from './middleware/error.middleware';
 import { globalRateLimit } from './middleware/rate-limit.middleware';
 import routes from './routes';
 import { startWorkers } from './jobs';
+import { triggerStartupSync } from './services/category-auto-sync.service';
 
 const app = express();
 
@@ -25,6 +26,8 @@ app.use(errorMiddleware);
 app.listen(env.PORT, () => {
   console.log(`[Server] Running on port ${env.PORT} (${env.NODE_ENV})`);
   startWorkers();
+  // Daj workerom 3s na start, potem sprawdź czy kategorie wymagają synca
+  setTimeout(() => triggerStartupSync().catch(console.warn), 3000);
 });
 
 export default app;

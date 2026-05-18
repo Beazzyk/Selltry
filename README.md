@@ -1,4 +1,4 @@
-# AutoLister
+# Selltry
 
 Wieloplatformowe narzedzie SaaS do publikacji ogloszen czesci samochodowych.
 

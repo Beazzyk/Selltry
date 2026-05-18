@@ -6,8 +6,8 @@ import { Platform } from '@/types';
 import { useQuery } from '@tanstack/react-query';
 import { getPlatforms } from '@/api/platforms.api';
 import { getMarginRules } from '@/api/margins.api';
-
-const PLATFORMS: Platform[] = ['ALLEGRO', 'OVOKO', 'OTOMOTO', 'OLX', 'EBAY'];
+import { PlatformCategoryPicker } from './PlatformCategoryPicker';
+import { CATEGORY_SYNC_PLATFORMS } from '@/constants';
 
 interface Props {
   data: WizardData;
@@ -65,8 +65,13 @@ export function Step4Submit({ data, onChange, existingImageCount = 0 }: Props) {
 
       <div className="space-y-2">
         <h4 className="text-sm font-semibold text-gray-700">Platformy publikacji</h4>
+        {data.categoryType && data.categoryType !== 'AUTOMOTIVE' && (
+          <p className="text-xs text-[var(--muted)] bg-[var(--bg-2)] rounded px-3 py-2">
+            Otomoto i Ovoko dostępne tylko dla kategorii Motoryzacja.
+          </p>
+        )}
         <div className="grid grid-cols-2 gap-2">
-          {PLATFORMS.map((platform) => {
+          {allowedPlatforms.map((platform) => {
             const active = activePlatforms.has(platform);
             const selected = data.selectedPlatforms.includes(platform);
             return (
@@ -89,6 +94,30 @@ export function Step4Submit({ data, onChange, existingImageCount = 0 }: Props) {
           })}
         </div>
       </div>
+
+      {syncedPlatforms.length > 0 && (
+        <div className="space-y-3">
+          <h4 className="text-sm font-semibold text-gray-700">Kategorie na platformach</h4>
+          <p className="text-xs text-gray-500">
+            Wybierz kategorię na każdej platformie — bez tego ogłoszenie nie zostanie wystawione.
+          </p>
+          {syncedPlatforms.map((platform) => (
+            <PlatformCategoryPicker
+              key={platform}
+              platform={platform}
+              selectedExternalId={data.platformCategories[platform]}
+              onSelect={(externalId) =>
+                onChange({ platformCategories: { ...data.platformCategories, [platform]: externalId } })
+              }
+              onClear={() => {
+                const next = { ...data.platformCategories };
+                delete next[platform];
+                onChange({ platformCategories: next });
+              }}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Podsumowanie */}
       <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 space-y-2">

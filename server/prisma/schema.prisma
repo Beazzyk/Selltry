@@ -67,6 +67,12 @@ model MarginRule {
 // NORMALIZACJA POJAZDÓW
 // ============================================================
 
+model Brand {
+  id            String         @id @default(cuid())
+  name          String         @unique
+  categoryTypes CategoryType[]
+}
+
 model VehicleMake {
   id      String        @id @default(cuid())
   name    String        @unique
@@ -101,10 +107,11 @@ model VehicleGeneration {
 // ============================================================
 
 model InternalCategory {
-  id       String  @id @default(cuid())
-  name     String
-  slug     String  @unique
-  parentId String?
+  id           String       @id @default(cuid())
+  name         String
+  slug         String       @unique
+  parentId     String?
+  categoryType CategoryType @default(AUTOMOTIVE)
 
   parent   InternalCategory?  @relation("CategoryTree", fields: [parentId], references: [id])
   children InternalCategory[] @relation("CategoryTree")
@@ -127,6 +134,20 @@ model PlatformCategoryMapping {
   @@unique([internalCategoryId, platform])
 }
 
+model PlatformCategory {
+  id               String   @id @default(cuid())
+  platform         Platform
+  externalId       String
+  parentExternalId String?
+  name             String
+  isLeaf           Boolean  @default(false)
+  depth            Int      @default(0)
+  syncedAt         DateTime @default(now())
+
+  @@unique([platform, externalId])
+  @@index([platform, parentExternalId])
+}
+
 // ============================================================
 // OGŁOSZENIA
 // ============================================================
@@ -142,11 +163,11 @@ model Listing {
   condition   Condition
   quantity    Int         @default(1)
 
-  identMethod    IdentMethod
+  identMethod    IdentMethod @default(MANUAL)
   vin            String?
   catalogNumber  String?
 
-  vehicleType    VehicleType
+  vehicleType    VehicleType @default(CAR)
   vehicleMakeId  String?
   vehicleModelId String?
   vehicleGenId   String?
@@ -157,8 +178,10 @@ model Listing {
   partSide     String?
   partDetails  String?
 
-  damageDescription String?
-  rawUserInput      String?
+  attributes         Json?
+  damageDescription  String?
+  rawUserInput       String?
+  platformCategories Json? // { ALLEGRO: "extId", OLX: "extId", OTOMOTO: "extId" }
 
   status    ListingStatus @default(DRAFT)
   createdAt DateTime      @default(now())
@@ -261,4 +284,14 @@ enum PlatformStatus {
 enum MarginType {
   PERCENTAGE
   FIXED_AMOUNT
+}
+
+enum CategoryType {
+  AUTOMOTIVE
+  ELECTRONICS
+  HOME_GARDEN
+  FASHION
+  SPORT
+  TOOLS
+  OTHER
 }

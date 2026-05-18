@@ -20,6 +20,7 @@ export const env = {
   JWT_SECRET: requireEnv('JWT_SECRET'),
   JWT_REFRESH_SECRET: requireEnv('JWT_REFRESH_SECRET'),
   ENCRYPTION_KEY: requireEnv32Chars('ENCRYPTION_KEY'),
+  REDIS_URL: process.env.REDIS_URL ?? 'redis://localhost:6379',
   S3_ENDPOINT: process.env.S3_ENDPOINT ?? '',
   S3_BUCKET: process.env.S3_BUCKET ?? '',
   S3_REGION: process.env.S3_REGION ?? 'us-east-1',
@@ -28,7 +29,7 @@ export const env = {
   ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY ?? '',
   ALLEGRO_SANDBOX: process.env.ALLEGRO_SANDBOX !== 'false',
   ALLEGRO_USER_AGENT:
-    process.env.ALLEGRO_USER_AGENT ?? 'AutoLister/0.1.0 (+https://example.com/autolister)',
+    process.env.ALLEGRO_USER_AGENT ?? 'Selltry/0.1.0 (+https://selltry.pl)',
   ALLEGRO_CLIENT_ID: process.env.ALLEGRO_CLIENT_ID ?? '',
   ALLEGRO_CLIENT_SECRET: process.env.ALLEGRO_CLIENT_SECRET ?? '',
   ALLEGRO_REDIRECT_URI: process.env.ALLEGRO_REDIRECT_URI ?? '',

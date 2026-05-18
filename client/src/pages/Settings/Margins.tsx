@@ -8,7 +8,7 @@ import { useDebounce } from '@/hooks/useDebounce';
 const PLATFORM_META: Record<Platform, { label: string; bg: string; initials: string }> = {
   ALLEGRO: { label: 'Allegro', bg: 'bg-orange-500', initials: 'AL' },
   OVOKO: { label: 'Ovoko', bg: 'bg-emerald-600', initials: 'OV' },
-  OTOMOTO: { label: 'Otomoto', bg: 'bg-blue-600', initials: 'OT' },
+  OTOMOTO: { label: 'Otomoto', bg: 'bg-[var(--pf-otomoto)]', initials: 'OT' },
   OLX: { label: 'OLX', bg: 'bg-lime-500', initials: 'OLX' },
   EBAY: { label: 'eBay', bg: 'bg-yellow-400', initials: 'eB' },
 };
@@ -64,14 +64,14 @@ export default function MarginsSection() {
             <div className="flex w-full overflow-hidden rounded-lg border border-gray-200 text-xs font-medium">
               <button
                 type="button"
-                className={`flex-1 py-1.5 transition-colors ${rule.marginType === 'PERCENTAGE' ? 'bg-blue-600 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
+                className={`flex-1 py-1.5 transition-colors ${rule.marginType === 'PERCENTAGE' ? 'bg-[var(--navy)] text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
                 onClick={() => setType(platform, 'PERCENTAGE')}
               >
                 %
               </button>
               <button
                 type="button"
-                className={`flex-1 py-1.5 transition-colors ${rule.marginType === 'FIXED_AMOUNT' ? 'bg-blue-600 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
+                className={`flex-1 py-1.5 transition-colors ${rule.marginType === 'FIXED_AMOUNT' ? 'bg-[var(--navy)] text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
                 onClick={() => setType(platform, 'FIXED_AMOUNT')}
               >
                 PLN

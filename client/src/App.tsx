@@ -5,6 +5,7 @@ import { ProtectedRoute } from '@/components/shared/ProtectedRoute';
 import { ToastProvider } from '@/components/ui/toast';
 import { useAuthStore } from '@/store/auth.store';
 import { getMe } from '@/api/auth.api';
+import LandingPage from '@/pages/Landing';
 import LoginPage from '@/pages/Auth/Login';
 import RegisterPage from '@/pages/Auth/Register';
 import LandingPage from '@/pages/Landing';
@@ -31,6 +32,14 @@ function AuthLoader({ children }: { children: React.ReactNode }) {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return <>{children}</>;
+}
+
+function HomeRoute() {
+  const user = useAuthStore((s) => s.user);
+  const loading = useAuthStore((s) => s.isLoading);
+  if (loading) return null;
+  if (user) return <Navigate to="/dashboard" replace />;
+  return <LandingPage />;
 }
 
 export default function App() {
