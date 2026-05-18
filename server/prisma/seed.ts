@@ -1,5 +1,71 @@
-import { PrismaClient, Platform, VehicleType } from '@prisma/client';
+import { PrismaClient, Platform, VehicleType, CategoryType } from '@prisma/client';
 import { INTERNAL_CATEGORY_TREE } from '../src/constants/internal-categories';
+
+interface NonAutoCategory {
+  name: string;
+  slug: string;
+  type: CategoryType;
+  children: { name: string; slug: string }[];
+}
+
+const nonAutoTree: NonAutoCategory[] = [
+  {
+    name: 'Elektronika', slug: 'electronics-cat', type: CategoryType.ELECTRONICS,
+    children: [
+      { name: 'Smartfony',        slug: 'smartphones' },
+      { name: 'Laptopy',          slug: 'laptops' },
+      { name: 'Tablety',          slug: 'tablets' },
+      { name: 'Audio',            slug: 'audio' },
+      { name: 'Foto i Video',     slug: 'photo-video' },
+      { name: 'Gry i konsole',    slug: 'gaming' },
+      { name: 'Akcesoria',        slug: 'electronics-accessories' },
+    ],
+  },
+  {
+    name: 'Dom i Ogród', slug: 'home-garden-cat', type: CategoryType.HOME_GARDEN,
+    children: [
+      { name: 'AGD',              slug: 'home-appliances' },
+      { name: 'Meble',            slug: 'furniture' },
+      { name: 'Narzędzia ogrodowe', slug: 'garden-tools' },
+      { name: 'Oświetlenie',      slug: 'home-lighting' },
+      { name: 'Tekstylia',        slug: 'textiles' },
+    ],
+  },
+  {
+    name: 'Moda', slug: 'fashion-cat', type: CategoryType.FASHION,
+    children: [
+      { name: 'Odzież damska',    slug: 'womens-clothing' },
+      { name: 'Odzież męska',     slug: 'mens-clothing' },
+      { name: 'Obuwie',           slug: 'footwear' },
+      { name: 'Torebki',          slug: 'bags' },
+    ],
+  },
+  {
+    name: 'Sport i Turystyka', slug: 'sport-cat', type: CategoryType.SPORT,
+    children: [
+      { name: 'Rowery',           slug: 'bikes' },
+      { name: 'Fitness',          slug: 'fitness' },
+      { name: 'Sporty zimowe',    slug: 'winter-sports' },
+      { name: 'Sporty wodne',     slug: 'water-sports' },
+    ],
+  },
+  {
+    name: 'Narzędzia', slug: 'tools-cat', type: CategoryType.TOOLS,
+    children: [
+      { name: 'Narzędzia ręczne', slug: 'hand-tools' },
+      { name: 'Elektronarzędzia', slug: 'power-tools' },
+      { name: 'Pomiarowe',        slug: 'measuring-tools' },
+    ],
+  },
+  {
+    name: 'Inne', slug: 'other-cat', type: CategoryType.OTHER,
+    children: [
+      { name: 'Zabawki',          slug: 'toys' },
+      { name: 'Kosmetyki',        slug: 'cosmetics' },
+      { name: 'Pozostałe',        slug: 'misc' },
+    ],
+  },
+];
 
 const prisma = new PrismaClient();
 
