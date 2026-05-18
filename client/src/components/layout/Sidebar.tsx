@@ -1,10 +1,11 @@
-import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Package, PlugZap, Settings, ShoppingCart, LogOut } from 'lucide-react';
+import { Link, NavLink } from 'react-router-dom';
+import { Home, LayoutDashboard, Package, PlugZap, Settings, ShoppingCart, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { logout } from '@/api/auth.api';
 import { useAuthStore } from '@/store/auth.store';
 
 const NAV_ITEMS = [
+  { to: '/', label: 'Strona główna', icon: Home },
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/listings', label: 'Ogłoszenia', icon: Package },
   { to: '/platforms', label: 'Platformy', icon: PlugZap },
@@ -26,8 +27,10 @@ export function Sidebar({ onNavigate }: SidebarProps) {
 
   return (
     <aside className="flex h-full w-60 flex-col bg-gray-900 text-white">
-      <div className="flex h-16 items-center px-6 border-b border-gray-800">
-        <span className="text-lg font-bold text-white">AutoLister</span>
+      <div className="flex h-16 items-center border-b border-gray-800 px-6">
+        <Link to="/" className="text-lg font-bold text-white hover:text-amber-400">
+          AutoLister
+        </Link>
       </div>
 
       <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">

@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { useEffect } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { ProtectedRoute } from '@/components/shared/ProtectedRoute';
@@ -7,6 +7,7 @@ import { useAuthStore } from '@/store/auth.store';
 import { getMe } from '@/api/auth.api';
 import LoginPage from '@/pages/Auth/Login';
 import RegisterPage from '@/pages/Auth/Register';
+import LandingPage from '@/pages/Landing';
 import DashboardPage from '@/pages/Dashboard';
 import ListingsPage from '@/pages/Listings';
 import NewListingPage from '@/pages/Listings/New';
@@ -38,13 +39,13 @@ export default function App() {
       <BrowserRouter>
         <AuthLoader>
           <Routes>
+            <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
 
             <Route element={<ProtectedRoute />}>
               <Route element={<Layout />}>
                 <Route path="/dashboard" element={<DashboardPage />} />
-                <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/listings" element={<ListingsPage />} />
                 <Route path="/listings/new" element={<NewListingPage />} />
                 <Route
