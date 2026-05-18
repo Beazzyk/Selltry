@@ -114,7 +114,7 @@ export async function executeSync(platform: Platform, userId: string): Promise<{
       rawCategories = await fetchAllAllegroCategoriesAsApp();
       break;
     case Platform.OLX:
-      rawCategories = await fetchAllOlxCategories(userId);
+      rawCategories = await fetchAllOlxCategories(userId ?? '');
       break;
     case Platform.OTOMOTO:
       rawCategories = await fetchAllOtomotoCategories(userId);

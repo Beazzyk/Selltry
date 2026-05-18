@@ -4,6 +4,7 @@ import * as categoryService from '../services/category.service';
 import * as platformCategoryService from '../services/platform-category.service';
 import { getCategorySyncJobStatus } from '../jobs/category-sync.job';
 import { AuthRequest } from '../middleware/auth.middleware';
+import { syncIcecatBrands, isIcecatConfigured } from '../services/icecat.service';
 
 export async function getCategories(req: Request, res: Response, next: NextFunction) {
   try {
@@ -115,6 +116,58 @@ export async function getPlatformCategorySyncJobStatus(req: Request, res: Respon
     const { jobId } = req.params;
     const status = await getCategorySyncJobStatus(jobId);
     res.json(status);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function syncAllPlatformCategories(req: Request, res: Response, next: NextFunction) {
+  try {
+    const userId = (req as AuthRequest).userId;
+    const results: Record<string, unknown> = {};
+
+    // Allegro — app token, zawsze działa
+    try {
+      const { jobId } = await platformCategoryService.triggerSync('ALLEGRO' as import('@prisma/client').Platform, userId);
+      results['ALLEGRO'] = { status: 'queued', jobId };
+    } catch (err) {
+      results['ALLEGRO'] = { status: 'error', error: String(err) };
+    }
+
+    // OLX — publiczne API
+    try {
+      const { jobId } = await platformCategoryService.triggerSync('OLX' as import('@prisma/client').Platform, userId);
+      results['OLX'] = { status: 'queued', jobId };
+    } catch (err) {
+      results['OLX'] = { status: 'error', error: String(err) };
+    }
+
+    // Icecat brands (opcjonalnie, gdy skonfigurowane)
+    if (isIcecatConfigured()) {
+      try {
+        const icecat = await syncIcecatBrands();
+        results['ICECAT_BRANDS'] = { status: 'done', upserted: icecat.upserted };
+      } catch (err) {
+        results['ICECAT_BRANDS'] = { status: 'error', error: String(err) };
+      }
+    } else {
+      results['ICECAT_BRANDS'] = { status: 'skipped', reason: 'ICECAT_USERNAME/ICECAT_PASSWORD not set' };
+    }
+
+    res.status(202).json(results);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function syncIcecatBrandsEndpoint(req: Request, res: Response, next: NextFunction) {
+  try {
+    if (!isIcecatConfigured()) {
+      res.status(400).json({ error: 'ICECAT_USERNAME i ICECAT_PASSWORD muszą być ustawione w .env' });
+      return;
+    }
+    const result = await syncIcecatBrands();
+    res.json({ status: 'done', ...result });
   } catch (err) {
     next(err);
   }

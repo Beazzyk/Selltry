@@ -19,6 +19,8 @@ router.get('/platform/:platform', ctrl.getPlatformCategories);
 router.get('/platform/:platform/search', ctrl.searchPlatformCategories);
 router.get('/platform/:platform/sync-status', ctrl.getPlatformCategorySyncStatus);
 router.post('/platform/:platform/sync', ctrl.triggerPlatformCategorySync);
+router.post('/sync/all', ctrl.syncAllPlatformCategories);
+router.post('/sync/icecat-brands', ctrl.syncIcecatBrandsEndpoint);
 router.get('/platform/:platform/breadcrumb/:externalId', ctrl.getPlatformCategoryBreadcrumb);
 
 export default router;

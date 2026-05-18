@@ -120,10 +120,23 @@ interface OlxCategoriesResponse {
   [key: string]: unknown;
 }
 
+// Publiczne API OLX — nie wymaga tokenu użytkownika
+export async function fetchAllOlxCategoriesPublic(): Promise<RawPlatformCategory[]> {
+  const response = await axios.get<OlxCategoriesResponse>(
+    `${BASE_URL}/categories`,
+    { headers: { Version: '2.0', Accept: 'application/json' } },
+  );
+  return flattenCategoryTree(response.data?.data ?? []);
+}
+
 export async function fetchAllOlxCategories(userId: string): Promise<RawPlatformCategory[]> {
-  const token = await getValidAccessToken(userId);
-  const response = await olxRequest<OlxCategoriesResponse>(token, 'GET', '/categories');
-  return flattenCategoryTree(response.data ?? []);
+  try {
+    return await fetchAllOlxCategoriesPublic();
+  } catch {
+    const token = await getValidAccessToken(userId);
+    const response = await olxRequest<OlxCategoriesResponse>(token, 'GET', '/categories');
+    return flattenCategoryTree(response.data ?? []);
+  }
 }
 
 async function olxRequest<T>(

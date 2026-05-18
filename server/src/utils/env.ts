@@ -43,6 +43,8 @@ export const env = {
   OLX_REDIRECT_URI: process.env.OLX_REDIRECT_URI ?? '',
   OVOKO_MOCK: process.env.OVOKO_MOCK !== 'false',
   EBAY_MOCK: process.env.EBAY_MOCK !== 'false',
+  ICECAT_USERNAME: process.env.ICECAT_USERNAME ?? '',
+  ICECAT_PASSWORD: process.env.ICECAT_PASSWORD ?? '',
   EBAY_SANDBOX: process.env.EBAY_SANDBOX !== 'false',
   EBAY_CLIENT_ID: process.env.EBAY_CLIENT_ID ?? '',
   EBAY_CLIENT_SECRET: process.env.EBAY_CLIENT_SECRET ?? '',
