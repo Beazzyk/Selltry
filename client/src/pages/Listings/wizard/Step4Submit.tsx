@@ -104,7 +104,10 @@ export function Step4Submit({ data, onChange }: Props) {
       </div>
 
       <p className="text-xs text-gray-400">
-        Ogłoszenie zostanie zapisane jako szkic. Wystawianie na platformy będzie dostępne po połączeniu platform w zakładce Platformy.
+        Ogłoszenie zostanie zapisane w systemie.
+        {data.selectedPlatforms.length > 0
+          ? ' Zaznaczone platformy otrzymają ogłoszenie od razu po zapisie.'
+          : ' Możesz opublikować je później w szczegółach ogłoszenia lub na zakładce Platformy.'}
       </p>
 
       {data.basePrice && data.selectedPlatforms.length > 0 && (

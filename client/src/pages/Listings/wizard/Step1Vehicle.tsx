@@ -1,16 +1,19 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Car, Bike, Truck, HelpCircle } from 'lucide-react';
+import { Car, Bike, Truck, HelpCircle, ChevronDown } from 'lucide-react';
 import { getVehicleMakes, getVehicleModels, getVehicleGenerations } from '@/api/categories.api';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { WizardData } from './types';
 import { VehicleType, IdentMethod } from '@/types';
+import { VehicleMakeSelect } from './vehicle/VehicleMakeSelect';
+import { VehicleModelSelect } from './vehicle/VehicleModelSelect';
 
 interface Props {
   data: WizardData;
   onChange: (patch: Partial<WizardData>) => void;
+  compact?: boolean;
 }
 
 const VEHICLE_TYPES: { value: VehicleType; label: string; Icon: React.ElementType }[] = [
@@ -26,13 +29,10 @@ const IDENT_METHODS: { value: IdentMethod; label: string }[] = [
   { value: 'MANUAL', label: 'Opis manualny' },
 ];
 
-export function Step1Vehicle({ data, onChange }: Props) {
-  const [makeSearch, setMakeSearch] = useState('');
-  const [modelSearch, setModelSearch] = useState('');
-  const [makeDropdownOpen, setMakeDropdownOpen] = useState(false);
-  const [modelDropdownOpen, setModelDropdownOpen] = useState(false);
-  const [makeOpenUpwards, setMakeOpenUpwards] = useState(false);
-  const [modelOpenUpwards, setModelOpenUpwards] = useState(false);
+export function Step1Vehicle({ data, onChange, compact }: Props) {
+  const prevType = useRef(data.vehicleType);
+  const prevMake = useRef(data.vehicleMakeId);
+  const prevModel = useRef(data.vehicleModelId);
 
   const { data: makes = [] } = useQuery({
     queryKey: ['makes', data.vehicleType],
@@ -52,61 +52,38 @@ export function Step1Vehicle({ data, onChange }: Props) {
   });
 
   useEffect(() => {
+    if (prevType.current === data.vehicleType) return;
+    prevType.current = data.vehicleType;
     onChange({ vehicleMakeId: undefined, vehicleModelId: undefined, vehicleGenId: undefined });
-  }, [data.vehicleType]);
+  }, [data.vehicleType, onChange]);
 
   useEffect(() => {
+    if (prevMake.current === data.vehicleMakeId) return;
+    prevMake.current = data.vehicleMakeId;
     onChange({ vehicleModelId: undefined, vehicleGenId: undefined });
-  }, [data.vehicleMakeId]);
+  }, [data.vehicleMakeId, onChange]);
 
   useEffect(() => {
+    if (prevModel.current === data.vehicleModelId) return;
+    prevModel.current = data.vehicleModelId;
     onChange({ vehicleGenId: undefined });
-  }, [data.vehicleModelId]);
+  }, [data.vehicleModelId, onChange]);
 
-  const filteredMakes = makes.filter((m) =>
-    m.name.toLowerCase().includes(makeSearch.toLowerCase()),
-  );
-  const filteredModels = models.filter((m) =>
-    m.name.toLowerCase().includes(modelSearch.toLowerCase()),
-  );
-
-  const selectedMake = makes.find((make) => make.id === data.vehicleMakeId);
-  const selectedModel = models.find((model) => model.id === data.vehicleModelId);
-
-  useEffect(() => {
-    setMakeSearch(selectedMake?.name ?? '');
-  }, [selectedMake?.name]);
-
-  useEffect(() => {
-    setModelSearch(selectedModel?.name ?? '');
-  }, [selectedModel?.name]);
-
-  useEffect(() => {
-    setModelDropdownOpen(false);
-    setModelSearch('');
-  }, [data.vehicleMakeId]);
-
-  function resolveDropdownDirection(target: EventTarget | null): boolean {
-    const element = target as HTMLElement | null;
-    if (!element) return false;
-    const rect = element.getBoundingClientRect();
-    const spaceBelow = window.innerHeight - rect.bottom;
-    return spaceBelow < 320;
-  }
-
-  return (
-    <div className="space-y-6">
-      {/* Metoda identyfikacji */}
-      <div>
-        <Label className="text-base font-semibold mb-3 block">Metoda identyfikacji</Label>
-        <div className="flex gap-2 flex-wrap">
+  const identSection = (
+    <details className="rounded-lg border border-gray-200 bg-gray-50/50">
+      <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 text-sm font-medium text-gray-700">
+        Identyfikacja części (opcjonalnie)
+        <ChevronDown className="h-4 w-4 text-gray-400" />
+      </summary>
+      <div className="space-y-4 border-t border-gray-200 px-4 pb-4 pt-3">
+        <div className="flex flex-wrap gap-2">
           {IDENT_METHODS.map(({ value, label }) => (
             <button
               key={value}
               type="button"
               onClick={() => onChange({ identMethod: value })}
               className={cn(
-                'px-4 py-2 rounded-lg border text-sm font-medium transition-colors',
+                'rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors',
                 data.identMethod === value
                   ? 'border-primary-500 bg-primary-50 text-primary-700'
                   : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50',
@@ -116,165 +93,130 @@ export function Step1Vehicle({ data, onChange }: Props) {
             </button>
           ))}
         </div>
+        {data.identMethod === 'VIN' && (
+          <div>
+            <Label htmlFor="vin">Numer VIN</Label>
+            <Input
+              id="vin"
+              placeholder="np. WBA3A5G50DNP26082"
+              value={data.vin ?? ''}
+              onChange={(e) => onChange({ vin: e.target.value })}
+              className="mt-1 uppercase"
+              maxLength={17}
+            />
+          </div>
+        )}
+        {data.identMethod === 'CATALOG_NUMBER' && (
+          <div>
+            <Label htmlFor="catalog">Numer katalogowy OEM</Label>
+            <Input
+              id="catalog"
+              placeholder="np. 63117188979"
+              value={data.catalogNumber ?? ''}
+              onChange={(e) => onChange({ catalogNumber: e.target.value })}
+              className="mt-1"
+            />
+          </div>
+        )}
       </div>
+    </details>
+  );
 
-      {data.identMethod === 'VIN' && (
-        <div>
-          <Label htmlFor="vin">Numer VIN</Label>
-          <Input
-            id="vin"
-            placeholder="np. WBA3A5G50DNP26082"
-            value={data.vin ?? ''}
-            onChange={(e) => onChange({ vin: e.target.value })}
-            className="mt-1 uppercase"
-            maxLength={17}
-          />
-        </div>
+  return (
+    <div className="space-y-5">
+      {compact ? identSection : (
+        <>
+          <div>
+            <Label className="mb-2 block text-base font-semibold">Metoda identyfikacji</Label>
+            <div className="flex flex-wrap gap-2">
+              {IDENT_METHODS.map(({ value, label }) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => onChange({ identMethod: value })}
+                  className={cn(
+                    'rounded-lg border px-4 py-2 text-sm font-medium transition-colors',
+                    data.identMethod === value
+                      ? 'border-primary-500 bg-primary-50 text-primary-700'
+                      : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50',
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+          {data.identMethod === 'VIN' && (
+            <div>
+              <Label htmlFor="vin-full">Numer VIN</Label>
+              <Input
+                id="vin-full"
+                placeholder="np. WBA3A5G50DNP26082"
+                value={data.vin ?? ''}
+                onChange={(e) => onChange({ vin: e.target.value })}
+                className="mt-1 uppercase"
+                maxLength={17}
+              />
+            </div>
+          )}
+          {data.identMethod === 'CATALOG_NUMBER' && (
+            <div>
+              <Label htmlFor="catalog-full">Numer katalogowy OEM</Label>
+              <Input
+                id="catalog-full"
+                placeholder="np. 63117188979"
+                value={data.catalogNumber ?? ''}
+                onChange={(e) => onChange({ catalogNumber: e.target.value })}
+                className="mt-1"
+              />
+            </div>
+          )}
+        </>
       )}
 
-      {data.identMethod === 'CATALOG_NUMBER' && (
-        <div>
-          <Label htmlFor="catalog">Numer katalogowy OEM</Label>
-          <Input
-            id="catalog"
-            placeholder="np. 63117188979"
-            value={data.catalogNumber ?? ''}
-            onChange={(e) => onChange({ catalogNumber: e.target.value })}
-            className="mt-1"
-          />
-        </div>
-      )}
-
-      {/* Typ pojazdu */}
       <div>
-        <Label className="text-base font-semibold mb-3 block">Typ pojazdu</Label>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <Label className={cn('mb-2 block font-semibold', compact ? 'text-sm' : 'text-base')}>
+          Typ pojazdu
+        </Label>
+        <div className="grid grid-cols-4 gap-2">
           {VEHICLE_TYPES.map(({ value, label, Icon }) => (
             <button
               key={value}
               type="button"
               onClick={() => onChange({ vehicleType: value })}
               className={cn(
-                'flex flex-col items-center gap-2 rounded-xl border p-4 transition-colors',
+                'flex flex-col items-center gap-1 rounded-lg border p-2 transition-colors sm:gap-2 sm:p-3',
                 data.vehicleType === value
                   ? 'border-primary-500 bg-primary-50 text-primary-700'
                   : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50',
               )}
             >
-              <Icon className="h-6 w-6" />
-              <span className="text-sm font-medium">{label}</span>
+              <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
+              <span className="text-xs font-medium sm:text-sm">{label}</span>
             </button>
           ))}
         </div>
       </div>
 
-      {/* Marka */}
-      <div>
-        <Label className="text-base font-semibold mb-1 block">Marka</Label>
-        <div className="relative">
-          <Input
-            placeholder="Szukaj marki..."
-            value={makeSearch}
-            onFocus={(e) => {
-              setMakeOpenUpwards(resolveDropdownDirection(e.currentTarget));
-              setMakeDropdownOpen(true);
-            }}
-            onChange={(e) => {
-              setMakeSearch(e.target.value);
-              setMakeOpenUpwards(resolveDropdownDirection(e.currentTarget));
-              setMakeDropdownOpen(true);
-            }}
-            className="mb-2"
-          />
-          {makeDropdownOpen && (
-            <div
-              className={cn(
-                'absolute z-50 max-h-64 w-full overflow-y-auto rounded-xl border border-gray-300 bg-white shadow-xl ring-1 ring-black/5',
-                makeOpenUpwards ? 'bottom-full mb-1' : 'top-full mt-1',
-              )}
-            >
-              {filteredMakes.map((make) => (
-                <button
-                  key={make.id}
-                  type="button"
-                  onClick={() => {
-                    onChange({ vehicleMakeId: make.id });
-                    setMakeSearch(make.name);
-                    setMakeDropdownOpen(false);
-                  }}
-                  className={cn(
-                    'w-full px-4 py-2 text-left text-sm hover:bg-gray-50 transition-colors',
-                    data.vehicleMakeId === make.id && 'bg-primary-50 text-primary-700 font-medium',
-                  )}
-                >
-                  {make.name}
-                </button>
-              ))}
-              {filteredMakes.length === 0 && (
-                <p className="px-4 py-3 text-sm text-gray-400">Brak wyników</p>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
+      <VehicleMakeSelect
+        makes={makes}
+        selectedId={data.vehicleMakeId}
+        onSelect={(vehicleMakeId) => onChange({ vehicleMakeId })}
+      />
 
-      {/* Model */}
       {data.vehicleMakeId && (
-        <div>
-          <Label className="text-base font-semibold mb-1 block">Model</Label>
-          <div className="relative">
-            <Input
-              placeholder="Wybierz model..."
-              value={modelSearch}
-              onFocus={(e) => {
-                setModelOpenUpwards(resolveDropdownDirection(e.currentTarget));
-                setModelDropdownOpen(true);
-              }}
-              onChange={(e) => {
-                setModelSearch(e.target.value);
-                setModelOpenUpwards(resolveDropdownDirection(e.currentTarget));
-                setModelDropdownOpen(true);
-              }}
-            />
-            {modelDropdownOpen && (
-              <div
-                className={cn(
-                  'absolute z-50 max-h-64 w-full overflow-y-auto rounded-xl border border-gray-300 bg-white shadow-xl ring-1 ring-black/5',
-                  modelOpenUpwards ? 'bottom-full mb-1' : 'top-full mt-1',
-                )}
-              >
-                {filteredModels.map((model) => (
-                  <button
-                    key={model.id}
-                    type="button"
-                    onClick={() => {
-                      onChange({ vehicleModelId: model.id });
-                      setModelSearch(model.name);
-                      setModelDropdownOpen(false);
-                    }}
-                    className={cn(
-                      'w-full px-4 py-2 text-left text-sm hover:bg-gray-50 transition-colors',
-                      data.vehicleModelId === model.id && 'bg-primary-50 text-primary-700 font-medium',
-                    )}
-                  >
-                    {model.name}
-                  </button>
-                ))}
-                {filteredModels.length === 0 && (
-                  <p className="px-4 py-3 text-sm text-gray-400">Brak wyników</p>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
+        <VehicleModelSelect
+          models={models}
+          selectedId={data.vehicleModelId}
+          onSelect={(vehicleModelId) => onChange({ vehicleModelId })}
+        />
       )}
 
-      {/* Generacja / Rok */}
       {data.vehicleModelId && (
         <div className="grid grid-cols-2 gap-4">
           {generations.length > 0 ? (
             <div>
-              <Label className="mb-1 block">Generacja</Label>
+              <Label className="mb-1 block text-sm">Generacja</Label>
               <select
                 value={data.vehicleGenId ?? ''}
                 onChange={(e) => onChange({ vehicleGenId: e.target.value || undefined })}
@@ -290,7 +232,7 @@ export function Step1Vehicle({ data, onChange }: Props) {
             </div>
           ) : (
             <div>
-              <Label htmlFor="year" className="mb-1 block">Rok produkcji</Label>
+              <Label htmlFor="year" className="mb-1 block text-sm">Rok produkcji</Label>
               <Input
                 id="year"
                 type="number"
@@ -298,13 +240,14 @@ export function Step1Vehicle({ data, onChange }: Props) {
                 max={new Date().getFullYear() + 1}
                 placeholder="np. 1990"
                 value={data.vehicleYearRaw ?? ''}
-                onChange={(e) => onChange({ vehicleYearRaw: e.target.value ? Number(e.target.value) : undefined })}
+                onChange={(e) =>
+                  onChange({ vehicleYearRaw: e.target.value ? Number(e.target.value) : undefined })
+                }
               />
             </div>
           )}
-
           <div>
-            <Label htmlFor="engine" className="mb-1 block">Silnik (opcjonalne)</Label>
+            <Label htmlFor="engine" className="mb-1 block text-sm">Silnik (opcjonalnie)</Label>
             <Input
               id="engine"
               placeholder="np. 1.9 TDI"

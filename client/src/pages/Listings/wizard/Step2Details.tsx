@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { WizardData } from './types';
 import { Condition } from '@/types';
+import { MIN_DESCRIPTION_LENGTH } from './constants';
 
 interface Props {
   data: WizardData;
@@ -189,7 +190,7 @@ export function Step2Details({ data, onChange }: Props) {
 
       {/* Opis */}
       <div>
-        <Label htmlFor="description">Opis (min. 10 znaków)</Label>
+        <Label htmlFor="description">Opis (min. {MIN_DESCRIPTION_LENGTH} znaków)</Label>
         <textarea
           id="description"
           rows={5}
@@ -198,7 +199,7 @@ export function Step2Details({ data, onChange }: Props) {
           onChange={(e) => onChange({ description: e.target.value || undefined })}
           className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
         />
-        <p className={cn('text-xs mt-1 text-right', (data.description?.length ?? 0) < 10 ? 'text-red-400' : 'text-gray-400')}>
+        <p className={cn('text-xs mt-1 text-right', (data.description?.length ?? 0) < MIN_DESCRIPTION_LENGTH ? 'text-red-400' : 'text-gray-400')}>
           {data.description?.length ?? 0} znaków
         </p>
       </div>
