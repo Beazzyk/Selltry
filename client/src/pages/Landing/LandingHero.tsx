@@ -17,19 +17,19 @@ export function LandingHero() {
           <div>
             <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-300">
               <Sparkles className="h-3.5 w-3.5" />
-              Części samochodowe · wieloplatformowo
+              Sprzedaż wieloplatformowa · jeden panel
             </p>
 
             <h1 className="font-display text-4xl font-bold leading-[1.1] tracking-tight text-white sm:text-5xl lg:text-[3.25rem]">
-              Wystaw część raz.
+              Wystaw produkt raz.
               <span className="mt-1 block bg-gradient-to-r from-amber-300 via-amber-400 to-amber-200 bg-clip-text text-transparent">
                 Sprzedaj wszędzie.
               </span>
             </h1>
 
             <p className="mt-6 max-w-lg text-lg leading-relaxed text-slate-400">
-              Selltry łączy Allegro, Ovoko, Otomoto, OLX i eBay w jednym panelu — od opisu
-              z AI po publikację bez przepisywania ogłoszeń.
+              Selltry łączy Allegro, OLX, Otomoto, Ovoko i eBay w jednym panelu — wypełniasz
+              formularz raz, AI generuje tytuły i publikuje na wszystkich platformach.
             </p>
 
             <div className="mt-8 flex flex-wrap items-center gap-3">
@@ -104,10 +104,10 @@ export function LandingHero() {
                     Podsumowanie
                   </p>
                   <p className="mt-2 font-medium text-white">
-                    Lampa tylna Suzuki Samurai 1990 prawa używana
+                    Słuchawki Sony WH-1000XM5 czarne, jak nowe
                   </p>
                   <div className="mt-3 flex gap-4 text-sm text-slate-400">
-                    <span>używana</span>
+                    <span>jak nowe</span>
                     <span>·</span>
                     <span>3 zdjęcia</span>
                     <span>·</span>

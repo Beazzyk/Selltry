@@ -15,10 +15,10 @@ export function LandingFeatures() {
         <div className="max-w-2xl">
           <p className="text-sm font-medium uppercase tracking-widest text-amber-400/90">Funkcje</p>
           <h2 className="mt-2 font-display text-3xl font-bold text-white sm:text-4xl">
-            Zbudowane pod handel częściami
+            Zbudowane dla sprzedawców wieloplatformowych
           </h2>
           <p className="mt-4 text-lg text-slate-400">
-            Nie ogólny marketplace builder — narzędzie dla warsztatów, handlarzy i rozbiórek.
+            Elektronika, motoryzacja, moda, sport — jeden kreator dla wszystkich kategorii.
           </p>
         </div>
 
