@@ -39,7 +39,7 @@ export function LandingFooter() {
   return (
     <footer className="border-t border-white/5 py-8">
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 text-sm text-slate-500 sm:flex-row sm:px-6">
-        <p>© {new Date().getFullYear()} AutoLister</p>
+        <p>© {new Date().getFullYear()} Selltry</p>
         <div className="flex gap-6">
           <Link to="/login" className="hover:text-slate-300">
             Logowanie

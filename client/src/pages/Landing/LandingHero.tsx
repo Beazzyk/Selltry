@@ -28,7 +28,7 @@ export function LandingHero() {
             </h1>
 
             <p className="mt-6 max-w-lg text-lg leading-relaxed text-slate-400">
-              AutoLister łączy Allegro, Ovoko, Otomoto, OLX i eBay w jednym panelu — od opisu
+              Selltry łączy Allegro, Ovoko, Otomoto, OLX i eBay w jednym panelu — od opisu
               z AI po publikację bez przepisywania ogłoszeń.
             </p>
 

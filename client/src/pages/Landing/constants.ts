@@ -30,7 +30,7 @@ export const FEATURES = [
 export const STEPS = [
   { step: '01', title: 'Opisz część', desc: 'Formularz lub AI Parser — kategoria i tytuł gotowe w minutę.' },
   { step: '02', title: 'Dodaj zdjęcia', desc: 'Min. jedno zdjęcie, opcjonalnie dopasowanie do pojazdu.' },
-  { step: '03', title: 'Wystaw wszędzie', desc: 'Wybierz platformy — resztą zajmie się AutoLister.' },
+  { step: '03', title: 'Wystaw wszędzie', desc: 'Wybierz platformy — resztą zajmie się Selltry.' },
 ] as const;
 
 export const STATS = [

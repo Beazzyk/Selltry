@@ -104,7 +104,9 @@ export default function NewListingPage() {
         damageDescription: data.damageDescription,
       });
 
-      await uploadImages(listing.id, data.images);
+      if (data.images.length > 0) {
+        await uploadImages(listing.id, data.images);
+      }
 
       if (data.selectedPlatforms.length > 0) {
         await publishListing(listing.id, data.selectedPlatforms);
