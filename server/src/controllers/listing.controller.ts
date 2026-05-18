@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { AuthRequest } from '../middleware/auth.middleware';
 import * as listingService from '../services/listing.service';
+import type { CreateListingData } from '../services/listing.service';
 import * as imageService from '../services/image.service';
 import { ListingStatus, Platform, PlatformStatus } from '@prisma/client';
 import * as titleGeneratorService from '../services/title-generator.service';
@@ -17,19 +18,19 @@ const createSchema = z.object({
   condition: z.enum(['NEW', 'USED', 'DAMAGED']),
   quantity: z.number().int().positive().optional(),
   identMethod: z.enum(['VIN', 'CATALOG_NUMBER', 'MANUAL', 'AI_PARSED']),
-  vin: z.string().optional(),
-  catalogNumber: z.string().optional(),
+  vin: z.string().nullish(),
+  catalogNumber: z.string().nullish(),
   vehicleType: z.enum(['CAR', 'MOTORCYCLE', 'TRUCK', 'OTHER']),
-  vehicleMakeId: z.string().optional(),
-  vehicleModelId: z.string().optional(),
-  vehicleGenId: z.string().optional(),
-  vehicleYearRaw: z.number().int().optional(),
-  vehicleEngine: z.string().optional(),
+  vehicleMakeId: z.string().nullish(),
+  vehicleModelId: z.string().nullish(),
+  vehicleGenId: z.string().nullish(),
+  vehicleYearRaw: z.number().int().nullish(),
+  vehicleEngine: z.string().nullish(),
   categoryId: z.string().min(1),
-  partSide: z.string().optional(),
-  partDetails: z.string().optional(),
-  damageDescription: z.string().optional(),
-  rawUserInput: z.string().optional(),
+  partSide: z.string().nullish(),
+  partDetails: z.string().nullish(),
+  damageDescription: z.string().nullish(),
+  rawUserInput: z.string().nullish(),
 });
 
 const filterSchema = z.object({
@@ -47,10 +48,17 @@ function userId(req: Request): string {
   return (req as AuthRequest).userId;
 }
 
+/** Zod nullish() dopuszcza null — Prisma/service oczekują undefined zamiast null. */
+function stripNulls<T extends Record<string, unknown>>(data: T): Partial<T> {
+  return Object.fromEntries(
+    Object.entries(data).filter(([, value]) => value !== null),
+  ) as Partial<T>;
+}
+
 export async function createListing(req: Request, res: Response, next: NextFunction) {
   try {
-    const data = createSchema.parse(req.body);
-    const listing = await listingService.createListing(userId(req), data);
+    const data = stripNulls(createSchema.parse(req.body));
+    const listing = await listingService.createListing(userId(req), data as CreateListingData);
     res.status(201).json(listing);
   } catch (err) {
     next(err);
@@ -78,8 +86,12 @@ export async function getListing(req: Request, res: Response, next: NextFunction
 
 export async function updateListing(req: Request, res: Response, next: NextFunction) {
   try {
-    const data = createSchema.partial().parse(req.body);
-    const listing = await listingService.updateListing(userId(req), req.params.id, data);
+    const data = stripNulls(createSchema.partial().parse(req.body));
+    const listing = await listingService.updateListing(
+      userId(req),
+      req.params.id,
+      data as Partial<CreateListingData>,
+    );
     res.json(listing);
   } catch (err) {
     next(err);

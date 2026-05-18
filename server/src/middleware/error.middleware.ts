@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { ZodError } from 'zod';
 
 export class AppError extends Error {
   constructor(
@@ -22,6 +23,12 @@ export function errorMiddleware(
       error: err.message,
       code: err.code,
     });
+    return;
+  }
+
+  if (err instanceof ZodError) {
+    const message = err.errors.map((issue) => issue.message).join('; ');
+    res.status(400).json({ error: message || 'Validation error' });
     return;
   }
 

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { isAxiosError } from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft, ChevronRight, Check, Loader2 } from 'lucide-react';
@@ -116,13 +117,30 @@ export default function EditListingPage() {
       }
 
       if (data.selectedPlatforms.length > 0) {
-        await publishListing(id, data.selectedPlatforms);
+        try {
+          await publishListing(id, data.selectedPlatforms);
+        } catch (publishErr) {
+          const publishMsg = isAxiosError(publishErr)
+            ? (publishErr.response?.data as { error?: string })?.error
+            : undefined;
+          toast(
+            publishMsg
+              ? `Zapisano, ale publikacja nie powiodła się: ${publishMsg}`
+              : 'Zapisano, ale publikacja na platformach nie powiodła się',
+            'error',
+          );
+          navigate('/listings');
+          return;
+        }
       }
 
       toast('Ogłoszenie zostało zaktualizowane', 'success');
       navigate('/listings');
-    } catch {
-      toast('Błąd podczas zapisywania ogłoszenia', 'error');
+    } catch (err) {
+      const message = isAxiosError(err)
+        ? (err.response?.data as { error?: string })?.error
+        : undefined;
+      toast(message ?? 'Błąd podczas zapisywania ogłoszenia', 'error');
     } finally {
       setSubmitting(false);
     }
